@@ -1,0 +1,39 @@
+
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: wp
+    volumes:
+      - db_data:/var/lib/mysql
+
+  wordpress:
+    build: ./wordpress
+    # expose WP/Apache port for local testing only
+    ports:
+      - "8080:80"
+    environment:
+      DB_NAME: wp
+      DB_USER: root
+      DB_PASSWORD: secret
+      DB_HOST: db
+    volumes:
+      - uploads:/var/www/html/web/app/uploads
+    depends_on:
+      - db
+
+  next:
+    build: ./nextjs-site
+    environment:
+      # GraphQL endpoint **inside** the Docker network
+      NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
+    ports:
+      - "3000:3000"
+    depends_on:
+      - wordpress
+
+volumes:
+  db_data:
+  uploads:
