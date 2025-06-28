@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "node .next/standalone/server.js",   // <‑ matches Docker CMD
+    "start": "node .next/standalone/server.js",
     "lint": "next lint"
   },
   "dependencies": {
