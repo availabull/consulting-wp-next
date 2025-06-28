@@ -1,2 +1,19 @@
-node_modules/
+# Mac / IDE cruft
 .DS_Store
+.vscode/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Docker artefacts
+db_data/
+uploads/
+
+# Dot‑env (already ignored in sub‑repo but safe to repeat)
+.env
+/wordpress/.env
+
+# Log files at project root
+*.log
