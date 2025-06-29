@@ -1,27 +1,41 @@
 {
   "compilerOptions": {
+    /* ─────────────────────────── Target & language service ─────────────────────────── */
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
+
+    /* ─────────────────────────────‑ Project behaviour ──────────────────────────────── */
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    "incremental": true,
+
+    /* ─────────────────────────────‑ Module handling ‑──────────────────────────────── */
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
+
+    /* ────────────────────────────‑ Next‑JS language‑service plugin ─────────────────── */
     "plugins": [
-      {
-        "name": "next"
-      }
+      { "name": "next" }
     ],
+
+    /* ─────────────────────────────‑ **NEW** alias section ──────────────────────────── */
+    "baseUrl": ".",                             // allow absolute imports from project root
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./*"]                            // "@/lib/apollo" → "./lib/apollo.ts"
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }
