@@ -1,23 +1,21 @@
-# ---------- build stage ----------
+# ─────────────── Build stage ───────────────
 FROM node:22-slim AS builder
 
 WORKDIR /app
+ARG NEXT_PUBLIC_WPGRAPHQL_URL
+ENV NEXT_PUBLIC_WPGRAPHQL_URL=$NEXT_PUBLIC_WPGRAPHQL_URL
 
-# copy manifest files first for better caching
-COPY package.json pnpm-lock.yaml* ./
-
-# install deps with pnpm; fall back to npm if pnpm‑lock not present
+# copy manifest first to leverage cache
+COPY package.json pnpm-lock.yaml ./
 RUN npm i -g pnpm && pnpm install --frozen-lockfile
 
-# copy the rest of the source and build
+# copy source
 COPY . .
 RUN pnpm build
 
-# ---------- runtime stage ----------
+# ─────────────── Runtime stage ─────────────
 FROM node:22-slim
-
 WORKDIR /app
 COPY --from=builder /app ./
-
 EXPOSE 3000
 CMD ["node", ".next/standalone/server.js"]
