@@ -1,39 +1,72 @@
+version: "3.9"
 
 services:
+  # ─── database ──────────────────────────────────────────────
   db:
     image: mariadb:11
-    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
       MYSQL_DATABASE: wp
     volumes:
       - db_data:/var/lib/mysql
 
+  # ─── WordPress / Bedrock  →  https://wp.robertfisher.com ───
   wordpress:
     build: ./wordpress
-    # expose WP/Apache port for local testing only
-    ports:
-      - "8080:80"
     environment:
       DB_NAME: wp
       DB_USER: root
-      DB_PASSWORD: secret
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
       DB_HOST: db
+      WP_ENV:  ${WP_ENV:-production}
+      WP_HOME: https://wp.robertfisher.com
+      WP_SITEURL: https://wp.robertfisher.com/wp
     volumes:
       - uploads:/var/www/html/web/app/uploads
-    depends_on:
-      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)"
+      - "traefik.http.routers.wp.entrypoints=websecure"
+      - "traefik.http.routers.wp.tls.certresolver=cf"
+    depends_on: [db]
 
+  # ─── Next.js front‑end  →  https://robertfisher.com ────────
   next:
-    build: ./nextjs-site
+    build:
+      context: ./nextjs-site
+      args:
+        NEXT_PUBLIC_WPGRAPHQL_URL: http://placeholder/graphql   # only at build‑time
     environment:
-      # GraphQL endpoint **inside** the Docker network
-      NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
+      NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql       # runtime (inside network)
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.next.rule=Host(`robertfisher.com`,`www.robertfisher.com`)"
+      - "traefik.http.routers.next.entrypoints=websecure"
+      - "traefik.http.routers.next.tls.certresolver=cf"
+    depends_on: [wordpress]
+
+  # ─── Traefik 3  (reverse proxy + Let’s Encrypt) ────────────
+  traefik:
+    image: traefik:3
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.cf.acme.dnschallenge=true"
+      - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.cf.acme.email=${LE_EMAIL}"
+      - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
+    environment:
+      CF_DNS_API_TOKEN: ${CF_API_TOKEN}
     ports:
-      - "3000:3000"
-    depends_on:
-      - wordpress
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - le:/letsencrypt
 
 volumes:
   db_data:
   uploads:
+  le:
