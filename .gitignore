@@ -17,3 +17,7 @@ uploads/
 
 # Log files at project root
 *.log
+
+# Composer & WP uploads
+wordpress/vendor/
+uploads/
