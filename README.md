@@ -1,45 +1,59 @@
-# 🐳 Bedrock + Next = Your Standard Project Template
+# 🐳 Bedrock + Next starter – `robertfisher.com`
 
-The goal of this repo is to make **every future site** start the same way:
-
-* WordPress (Bedrock) as headless CMS  
-* Next.js 15+ for the UI  
-* Docker for everything – the same `docker‑compose.yml` runs **locally** and
-  **in production**  
-* Traefik issues Let’s Encrypt certs without manual work
+* WordPress (roots/Bedrock) – headless CMS  
+* Next.js 15 (React 19 ready) – front‑end  
+* Traefik 3 – reverse‑proxy + automatic Let’s Encrypt  
+* One `docker‑compose.yml` that runs **locally** and **on the droplet**
 
 ---
 
-## 1 Quick‑start (local)
+## 1 Local workflow
 
-| Goal | Command | Opens in browser |
-|------|---------|------------------|
-| **Build / start** all containers | `docker compose up --build -d` | – |
-| WordPress admin | – | <http://localhost:8080/wp/wp-admin> |
-| GraphQL endpoint | – | <http://localhost:8080/graphql> |
-| Next.js (in container) | – | <http://localhost:3100> |
-| **Ultra‑fast React dev** | `cd nextjs-site && pnpm dev` | <http://localhost:3000> |
-| **Stop** everything | `docker compose down` | – |
-| **Reset DB + uploads** | `docker compose down -v && docker compose up -d` | installer runs again |
+| Goal | One‑liner | Opens in browser |
+|------|-----------|------------------|
+| build & start | `docker compose up --build -d` | – |
+| WP admin | – | <http://localhost:8080/wp/wp-admin> |
+| GraphQL | – | <http://localhost:8080/graphql> |
+| Next.js (container) | – | <http://localhost:3100> |
+| ultrafast React dev (Turbopack) | `cd nextjs-site && pnpm dev` | <http://localhost:3000> |
+| stop stack | `docker compose down` | – |
+| **wipe DB + uploads** | ```bash
+docker compose down -v          # stop & drop volumes  
+docker volume prune -f          # optional: delete dangling vols  
+docker compose up -d            # fresh DB, run installer  
+``` | runs installer again |
 
-> **Why two front‑end ports?**  
-> **3000** = Turbopack (host) with hot‑reload.  
-> **3100** = the containerised Node server (use when Turbopack is *not* running).
+### What a clean start looks like
+
+* `https://localhost:8080/wp/wp-admin/install.php` shows **“Welcome to WordPress – Site Title / Username / Password”**  
+* After setup → activate **WP GraphQL** → save **Permalinks / Post name**  
+* `http://localhost:8080/graphql` returns `{"errors":[{"message":"Must provide query string"}]}`  
+* `http://localhost:3100` renders the Next.js front‑end (or use Turbopack on :3000).
 
 ---
 
-## 2 First run checklist
+## 2 Deploy (GitHub → DigitalOcean)
 
-1. Browse **`/wp/wp-admin/install.php`** – you should see  
-   *“Welcome to WordPress – Site Title / Username / Password”*.  
-   > if you see the *wp‑config wizard* instead, composer dependencies are missing;
-   run `composer install` inside **`wordpress/`** and rebuild.
+### 2.1 Prepare once
 
-2. After the short installer:  
-   * **Plugins → activate “WP GraphQL”**  
-   * **Settings → Permalinks → “Post name” → Save**
+| Where | What |
+|-------|------|
+| **Cloudflare** | *A* record → droplet IP (for `robertfisher.com`, `www`, `wp`) |
+| **Cloudflare → API Tokens** | create token → *Edit zone DNS* (for that zone) |
+| **Droplet** (`/etc/environment`) | ```bash
+LE_EMAIL=you@robertfisher.com
+CF_DNS_API_TOKEN=cf_xxxxxxxxxxxxxxxxx  
+MYSQL_ROOT_PASSWORD=prod-secret                         # keep DB pwd out of repo
+``` |
+| **GitHub → repo → Settings → Secrets** | same three vars above (`LE_EMAIL`, `CF_DNS_API_TOKEN`, `MYSQL_ROOT_PASSWORD`) |
 
-3. Confirm **GraphQL** → <http://localhost:8080/graphql> returns
+### 2.2 CI/CD flow
 
-   ```json
-   {"errors":[{"message":"Must provide query string"}]}
+1. `git push origin master`  
+   *GitHub Action* builds two images → pushes to GHCR.
+2. Action SSHs into the droplet, writes **`docker‑compose.yml`** and runs:
+
+   ```bash
+   docker compose pull
+   docker compose up -d
+# trigger
