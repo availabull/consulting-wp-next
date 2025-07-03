@@ -95,6 +95,7 @@ jobs:
             traefik:
               image: traefik:3
               command:
+                - "--log.level=INFO"  
                 - "--providers.docker=true"
                 - "--providers.docker.exposedbydefault=false"
                 - "--entrypoints.web.address=:80"
