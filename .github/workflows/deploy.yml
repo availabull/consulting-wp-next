@@ -55,7 +55,7 @@ jobs:
                 image: mariadb:11
                 restart: unless-stopped
                 environment:
-                  MYSQL_ROOT_PASSWORD: secret
+                  MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
                   MYSQL_DATABASE: wp
                 volumes: [ "db:/var/lib/mysql" ]
 
@@ -65,7 +65,7 @@ jobs:
                 environment:
                   DB_NAME: wp
                   DB_USER: root
-                  DB_PASSWORD: secret
+                  DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
                   DB_HOST: db
                 expose: [ "80" ]
                 volumes: [ "uploads:/var/www/html/web/app/uploads" ]
@@ -123,6 +123,7 @@ jobs:
             cat > .env <<EOF
             CLOUDFLARE_DNS_API_TOKEN=${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
             LE_EMAIL=${{ secrets.LE_EMAIL }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
             EOF
 
             docker compose pull          # new images just built
