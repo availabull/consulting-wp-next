@@ -5,119 +5,126 @@ on:
   push:
     branches: [main, master]
 
-# ── GitHub must allow this workflow to push images to GHCR ─────────────
 permissions:
-  contents: read        # enough for checkout
-  packages: write       # **required** for ghcr.io push
-# ───────────────────────────────────────────────────────────────────────
+  contents: read          # for actions/checkout
+  packages: write         # allow ghcr.io push
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # 1 ─ Checkout repo
-    - uses: actions/checkout@v4
+      # 1 ─ Checkout
+      - uses: actions/checkout@v4
 
-    # 2 ─ Log in to GitHub Container Registry
-    - name: Log in to GHCR
-      run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" \
-        | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      # 2 ─ Log in to GHCR
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" |
+          docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-    # 3 ─ Build & push WordPress image
-    - name: Build & push WordPress image
-      run: |
-        docker build -t ghcr.io/${{ github.repository }}/wp:${{ github.sha }} wordpress
-        docker push     ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
+      # 3 ─ WordPress image
+      - name: Build & push WordPress
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/wp:${{ github.sha }} wordpress
+          docker push     ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
 
-    # 4 ─ Build & push Next.js image
-    - name: Build & push Next.js image
-      run: |
-        docker build -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
-        docker push     ghcr.io/${{ github.repository }}/next:${{ github.sha }}
+      # 4 ─ Next.js image
+      - name: Build & push Next.js
+        run: |
+          docker build -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
+          docker push     ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
-    # 5 ─ SSH into droplet ➜ write compose ➜ (re)start stack
-    - name: Deploy on droplet
-      uses: appleboy/ssh-action@v1
-      with:
-        host:     ${{ secrets.DO_HOST }}
-        username: root
-        key:      ${{ secrets.DO_SSH_KEY }}
-        script: |
-          set -e
-          mkdir -p /srv/consultancy
-          cd /srv/consultancy
+      # 5 ─ Deploy on droplet
+      - name: Deploy on droplet
+        uses: appleboy/ssh-action@v1
+        with:
+          host:     ${{ secrets.DO_HOST }}
+          username: root
+          key:      ${{ secrets.DO_SSH_KEY }}
+          # ---------- begin remote script ----------
+          script: |
+            set -e
+            mkdir -p /srv/consultancy
+            cd /srv/consultancy
 
-          # ▸▸ Write docker‑compose.yml (overwrites previous version)
-          cat > docker-compose.yml <<'EOF'
-          services:
-            db:
-              image: mariadb:11
-              restart: unless-stopped
-              environment:
-                MYSQL_ROOT_PASSWORD: secret
-                MYSQL_DATABASE: wp
-              volumes: [ "db:/var/lib/mysql" ]
+            # ── compose file (over‑writes old one) ───────────────────────
+            cat > docker-compose.yml <<'EOF'
+            services:
+              db:
+                image: mariadb:11
+                restart: unless-stopped
+                environment:
+                  MYSQL_ROOT_PASSWORD: secret
+                  MYSQL_DATABASE: wp
+                volumes: [ "db:/var/lib/mysql" ]
 
-            wordpress:
-              image: ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
-              restart: unless-stopped
-              environment:
-                DB_NAME: wp
-                DB_USER: root
-                DB_PASSWORD: secret
-                DB_HOST: db
-              expose: [ "80" ]      # internal port – Traefik will route to it
-              volumes: [ "uploads:/var/www/html/web/app/uploads" ]
-              labels:
-                - traefik.enable=true
-                - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
-                - traefik.http.routers.wp.entrypoints=websecure
-                - traefik.http.routers.wp.tls.certresolver=cf
-                - traefik.http.services.wp.loadbalancer.server.port=80
-              depends_on: [ db ]
+              wordpress:
+                image: ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
+                restart: unless-stopped
+                environment:
+                  DB_NAME: wp
+                  DB_USER: root
+                  DB_PASSWORD: secret
+                  DB_HOST: db
+                expose: [ "80" ]
+                volumes: [ "uploads:/var/www/html/web/app/uploads" ]
+                labels:
+                  - traefik.enable=true
+                  - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
+                  - traefik.http.routers.wp.entrypoints=websecure
+                  - traefik.http.routers.wp.tls.certresolver=cf
+                  - traefik.http.services.wp.loadbalancer.server.port=80
+                depends_on: [ db ]
 
-            next:
-              image: ghcr.io/${{ github.repository }}/next:${{ github.sha }}
-              restart: unless-stopped
-              environment:
-                NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
-              expose: [ "3000" ]
-              labels:
-                - traefik.enable=true
-                - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
-                - traefik.http.routers.next.entrypoints=websecure
-                - traefik.http.routers.next.tls.certresolver=cf
-                - traefik.http.services.next.loadbalancer.server.port=3000
-              depends_on: [ wordpress ]
+              next:
+                image: ghcr.io/${{ github.repository }}/next:${{ github.sha }}
+                restart: unless-stopped
+                environment:
+                  NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
+                expose: [ "3000" ]
+                labels:
+                  - traefik.enable=true
+                  - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
+                  - traefik.http.routers.next.entrypoints=websecure
+                  - traefik.http.routers.next.tls.certresolver=cf
+                  - traefik.http.services.next.loadbalancer.server.port=3000
+                depends_on: [ wordpress ]
 
-            traefik:
-              image: traefik:3
-              command:
-                - "--log.level=INFO"  
-                - "--providers.docker=true"
-                - "--providers.docker.exposedbydefault=false"
-                - "--entrypoints.web.address=:80"
-                - "--entrypoints.websecure.address=:443"
-                - "--certificatesresolvers.cf.acme.dnschallenge=true"
-                - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
-                - "--certificatesresolvers.cf.acme.email=${LE_EMAIL}"
-                - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
-              environment:
-                CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
-              ports:
-                - "80:80"
-                - "443:443"
-              volumes:
-                - "/var/run/docker.sock:/var/run/docker.sock:ro"
-                - "le:/letsencrypt"
+              traefik:
+                image: traefik:3
+                command:
+                  - "--log.level=INFO"
+                  - "--providers.docker=true"
+                  - "--providers.docker.exposedbydefault=false"
+                  - "--entrypoints.web.address=:80"
+                  - "--entrypoints.websecure.address=:443"
+                  - "--certificatesresolvers.cf.acme.dnschallenge=true"
+                  - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
+                  - "--certificatesresolvers.cf.acme.email=${LE_EMAIL}"
+                  - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
+                environment:
+                  CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
+                  LE_EMAIL: ${LE_EMAIL}
+                ports:
+                  - "80:80"
+                  - "443:443"
+                volumes:
+                  - "/var/run/docker.sock:/var/run/docker.sock:ro"
+                  - "le:/letsencrypt"
 
-          volumes:
-            db:
-            uploads:
-            le:
-          EOF
+            volumes:
+              db:
+              uploads:
+              le:
+            EOF
 
-          docker compose pull
-          docker compose up -d --remove-orphans
+            # ── .env used by compose ────────────────────────────────────
+            cat > .env <<EOF
+            CLOUDFLARE_DNS_API_TOKEN=${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
+            LE_EMAIL=${{ secrets.LE_EMAIL }}
+            EOF
+
+            docker compose pull          # new images just built
+            docker compose up -d --remove-orphans
+          # ---------- end remote script ----------

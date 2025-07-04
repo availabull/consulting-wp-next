@@ -1,8 +1,5 @@
-# docker‑compose.yml  –  production with Traefik & automatic HTTPS
-# no "version:" line is required for Compose v2+
-
+# docker‑compose.yml — production stack, Traefik + automatic HTTPS
 services:
-  # ─── database ──────────────────────────────────────────────
   db:
     image: mariadb:11
     environment:
@@ -11,10 +8,9 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
-  # ─── WordPress / Bedrock  →  https://wp.robertfisher.com ───
   wordpress:
-    build: ./wordpress
-    expose: [ "80" ]                                   # <─ internal port for Traefik
+    build: ./wordpress            # for local dev; GH Actions builds again
+    expose: ["80"]
     environment:
       DB_NAME: wp
       DB_USER: root
@@ -26,34 +22,33 @@ services:
     volumes:
       - uploads:/var/www/html/web/app/uploads
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)"
-      - "traefik.http.routers.wp.entrypoints=websecure"
-      - "traefik.http.routers.wp.tls.certresolver=cf"
-      - "traefik.http.services.wp.loadbalancer.server.port=80"
+      - traefik.enable=true
+      - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
+      - traefik.http.routers.wp.entrypoints=websecure
+      - traefik.http.routers.wp.tls.certresolver=cf
+      - traefik.http.services.wp.loadbalancer.server.port=80
     depends_on: [db]
 
-  # ─── Next.js front‑end  →  https://robertfisher.com ────────
   next:
     build:
       context: ./nextjs-site
       args:
-        NEXT_PUBLIC_WPGRAPHQL_URL: http://placeholder/graphql   # build‑time only
-    expose: [ "3000" ]                                         # internal port for Traefik
+        NEXT_PUBLIC_WPGRAPHQL_URL: http://placeholder/graphql
+    expose: ["3000"]
     environment:
       NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)"
-      - "traefik.http.routers.next.entrypoints=websecure"
-      - "traefik.http.routers.next.tls.certresolver=cf"
-      - "traefik.http.services.next.loadbalancer.server.port=3000"
+      - traefik.enable=true
+      - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
+      - traefik.http.routers.next.entrypoints=websecure
+      - traefik.http.routers.next.tls.certresolver=cf
+      - traefik.http.services.next.loadbalancer.server.port=3000
     depends_on: [wordpress]
 
-  # ─── Traefik v3  (reverse‑proxy + Let’s Encrypt) ───────────
   traefik:
     image: traefik:3
     command:
+      - "--log.level=INFO"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
@@ -64,6 +59,7 @@ services:
       - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
     environment:
       CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
+      LE_EMAIL: ${LE_EMAIL}
     ports:
       - "80:80"
       - "443:443"
