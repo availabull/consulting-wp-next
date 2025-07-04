@@ -47,6 +47,14 @@ MYSQL_ROOT_PASSWORD=prod-secret                         # keep DB pwd out of rep
 ``` |
 | **GitHub → repo → Settings → Secrets** | same three vars above (`LE_EMAIL`, `CLOUDFLARE_DNS_API_TOKEN`, `MYSQL_ROOT_PASSWORD`) |
 
+#### Traefik `le` volume
+
+The `le` volume must contain an `acme.json` file with permissions `600`. Create it before starting Traefik:
+
+```bash
+touch acme.json && chmod 600 acme.json
+```
+
 ### 2.2 CI/CD flow
 
 1. `git push origin master`  
