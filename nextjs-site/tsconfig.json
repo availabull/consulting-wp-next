@@ -27,7 +27,7 @@
     /* ─────────────────────────────‑ **NEW** alias section ──────────────────────────── */
     "baseUrl": ".",                             // allow absolute imports from project root
     "paths": {
-      "@/*": ["./*"]                            // "@/lib/apollo" → "./lib/apollo.ts"
+      "@/*": ["./src/*"]                        // "@/lib/apollo" → "./src/lib/apollo.ts"
     }
   },
 
