@@ -1,0 +1,28 @@
+# Ignore version control
+.git
+.gitignore
+
+# Dependencies
+node_modules
+.pnpm
+
+# Build output
+.next
+out
+build
+coverage
+
+# Logs and temp files
+*.log
+*.tmp
+tmp
+
+# Environment files
+.env
+.env.*
+
+# Editor directories
+.vscode
+.idea
+.DS_Store
+

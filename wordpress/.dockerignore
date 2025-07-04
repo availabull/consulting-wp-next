@@ -1,0 +1,28 @@
+# Ignore version control
+.git
+.gitignore
+
+# Dependencies
+node_modules
+vendor
+
+# WordPress runtime directories
+web/app/uploads
+web/app/cache
+web/wp
+web/.htaccess
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Logs and temporary files
+*.log
+tmp
+
+# Editor directories
+.vscode
+.idea
+.DS_Store
+
