@@ -3,6 +3,7 @@ services:
   # ─── MariaDB ─────────────────────────────────────────────────────────
   db:
     image: mariadb:11
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
       MYSQL_DATABASE: wp
@@ -12,6 +13,7 @@ services:
   # ─── WordPress / Bedrock  →  https://wp.robertfisher.com ────────────
   wordpress:
     build: ./wordpress            # local dev build; CI builds again
+    restart: unless-stopped
     expose: ["80"]
     environment:
       DB_NAME: wp
@@ -37,6 +39,7 @@ services:
       context: ./nextjs-site
       args:
         NEXT_PUBLIC_WPGRAPHQL_URL: http://placeholder/graphql
+    restart: unless-stopped
     expose: ["3000"]
     environment:
       NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
@@ -51,6 +54,7 @@ services:
   # ─── Traefik v3 — reverse‑proxy + ACME DNS‑01 via Cloudflare ───────
   traefik:
     image: traefik:3
+    restart: unless-stopped
     command:
       - "--log.level=INFO"
       - "--providers.docker=true"
