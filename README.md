@@ -64,3 +64,6 @@ touch acme.json && chmod 600 acme.json
    ```bash
    docker compose pull
    docker compose up -d
+   ```
+
+   That's it—the droplet now runs the updated stack behind Traefik.
