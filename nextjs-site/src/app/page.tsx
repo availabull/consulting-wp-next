@@ -5,23 +5,32 @@ import { gql } from '@apollo/client';
 export const dynamic = 'force-dynamic';   // no ISR while in dev
 
 export default async function Home() {
-  const { data } = await client.query({
-    query: gql`
-      query SiteTitle {
-        generalSettings {
-          title
+  try {
+    const { data } = await client.query({
+      query: gql`
+        query SiteTitle {
+          generalSettings {
+            title
+          }
         }
-      }
-    `,
-    fetchPolicy: 'no-cache',
-  });
+      `,
+      fetchPolicy: 'no-cache',
+    });
 
-  return (
-    <main className="p-10">
-      <h1 className="text-3xl font-bold">{data.generalSettings.title}</h1>
-      <p className="mt-2 text-sm text-gray-500">
-        served by WordPress + GraphQL
-      </p>
-    </main>
-  );
+    return (
+      <main className="p-10">
+        <h1 className="text-3xl font-bold">{data.generalSettings.title}</h1>
+        <p className="mt-2 text-sm text-gray-500">
+          served by WordPress + GraphQL
+        </p>
+      </main>
+    );
+  } catch (error) {
+    console.error('Failed to fetch site title:', error);
+    return (
+      <main className="p-10">
+        <p className="text-red-500">Error loading site data.</p>
+      </main>
+    );
+  }
 }
