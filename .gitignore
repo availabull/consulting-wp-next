@@ -21,4 +21,8 @@ uploads/
 # Composer & WP uploads
 wordpress/vendor/
 
+<<<<<<< HEAD
 id_ed25519.b64
+=======
+
+>>>>>>> 1f60905 (chore: update .gitignore)
