@@ -45,7 +45,7 @@ LE_EMAIL=robert@robertfisher.com
 CLOUDFLARE_DNS_API_TOKEN=cf_xxxxxxxxxxxxxxxxx  
 MYSQL_ROOT_PASSWORD=prod-secret                         # keep DB pwd out of repo
 ``` |
-| **GitHub → repo → Settings → Secrets** | same three vars above (`LE_EMAIL`, `CF_DNS_API_TOKEN`, `MYSQL_ROOT_PASSWORD`) |
+| **GitHub → repo → Settings → Secrets** | same three vars above (`LE_EMAIL`, `CLOUDFLARE_DNS_API_TOKEN`, `MYSQL_ROOT_PASSWORD`) |
 
 ### 2.2 CI/CD flow
 
