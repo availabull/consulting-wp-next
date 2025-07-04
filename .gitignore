@@ -23,3 +23,6 @@ wordpress/vendor/
 uploads/
 .env
 .env
+
+
+id_ed25519.b64

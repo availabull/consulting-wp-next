@@ -1,5 +1,6 @@
 # docker‑compose.yml — production stack, Traefik + automatic HTTPS
 services:
+  # ─── MariaDB ─────────────────────────────────────────────────────────
   db:
     image: mariadb:11
     environment:
@@ -8,8 +9,9 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  # ─── WordPress / Bedrock  →  https://wp.robertfisher.com ────────────
   wordpress:
-    build: ./wordpress            # for local dev; GH Actions builds again
+    build: ./wordpress            # local dev build; CI builds again
     expose: ["80"]
     environment:
       DB_NAME: wp
@@ -29,6 +31,7 @@ services:
       - traefik.http.services.wp.loadbalancer.server.port=80
     depends_on: [db]
 
+  # ─── Next.js front‑end  →  https://robertfisher.com ────────────────
   next:
     build:
       context: ./nextjs-site
@@ -45,6 +48,7 @@ services:
       - traefik.http.services.next.loadbalancer.server.port=3000
     depends_on: [wordpress]
 
+  # ─── Traefik v3 — reverse‑proxy + ACME DNS‑01 via Cloudflare ───────
   traefik:
     image: traefik:3
     command:
@@ -57,6 +61,7 @@ services:
       - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
       - "--certificatesresolvers.cf.acme.email=${LE_EMAIL}"
       - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.cf.acme.onhostrule=true"        # ← NEW
     environment:
       CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
       LE_EMAIL: ${LE_EMAIL}
