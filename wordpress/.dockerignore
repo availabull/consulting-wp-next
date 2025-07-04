@@ -12,17 +12,16 @@ web/app/cache
 web/wp
 web/.htaccess
 
-# Local configuration
+# Logs and temp files
+*.log
+*.tmp
+tmp
+
+# Environment files
 .env
 .env.*
-!.env.example
-
-# Logs and temporary files
-*.log
-tmp
 
 # Editor directories
 .vscode
 .idea
 .DS_Store
-
