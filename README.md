@@ -10,6 +10,13 @@
 ## 1 Local workflow
 Copy `.env.example` to `.env` and fill in the values before starting the stack.
 
+Install dependencies first:
+
+```bash
+cd nextjs-site && pnpm install
+cd wordpress && composer install
+```
+
 | Goal | One‑liner | Opens in browser |
 |------|-----------|------------------|
 | build & start | `docker compose up --build -d` | – |
