@@ -49,10 +49,20 @@ MYSQL_ROOT_PASSWORD=prod-secret                         # keep DB pwd out of rep
 
 #### Traefik `le` volume
 
-The `le` volume must contain an `acme.json` file with permissions `600`. Create it before starting Traefik:
+Traefik keeps Let’s Encrypt data in the named volume `le`.  That volume
+needs an `acme.json` file with permissions `600`.
+Inspect the volume to find its path (usually
+`/var/lib/docker/volumes/<project>_le/_data`):
 
 ```bash
-touch acme.json && chmod 600 acme.json
+docker volume inspect le
+```
+
+Create the file inside that directory before starting Traefik:
+
+```bash
+touch /var/lib/docker/volumes/consulting-wp-next_le/_data/acme.json
+chmod 600 /var/lib/docker/volumes/consulting-wp-next_le/_data/acme.json
 ```
 
 ### 2.2 CI/CD flow
