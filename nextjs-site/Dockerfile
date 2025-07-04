@@ -7,7 +7,7 @@ ENV NEXT_PUBLIC_WPGRAPHQL_URL=$NEXT_PUBLIC_WPGRAPHQL_URL
 
 # copy manifest first to leverage cache
 COPY package.json pnpm-lock.yaml ./
-RUN npm i -g pnpm && pnpm install --frozen-lockfile --prod
+RUN npm i -g pnpm && pnpm install --frozen-lockfile
 
 # copy source
 COPY . .
