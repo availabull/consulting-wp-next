@@ -38,7 +38,7 @@ services:
     build:
       context: ./nextjs-site
       args:
-        NEXT_PUBLIC_WPGRAPHQL_URL: http://placeholder/graphql
+        NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     restart: unless-stopped
     expose: ["3000"]
     environment:
