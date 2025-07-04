@@ -67,3 +67,9 @@ touch acme.json && chmod 600 acme.json
    ```
 
    That's it—the droplet now runs the updated stack behind Traefik.
+
+### 2.3 Troubleshooting
+
+* `docker compose logs traefik`
+* check permissions of `acme.json` (should be `600`)
+* ensure required environment variables (`LE_EMAIL`, `CLOUDFLARE_DNS_API_TOKEN`, `MYSQL_ROOT_PASSWORD`) are set
