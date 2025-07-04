@@ -56,3 +56,6 @@ MYSQL_ROOT_PASSWORD=prod-secret                         # keep DB pwd out of rep
    ```bash
    docker compose pull
    docker compose up -d
+   ```
+
+   That's it—the droplet now runs the updated stack behind Traefik.
