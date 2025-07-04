@@ -41,8 +41,8 @@ docker compose up -d            # fresh DB, run installer
 | **Cloudflare** | *A* record → droplet IP (for `robertfisher.com`, `www`, `wp`) |
 | **Cloudflare → API Tokens** | create token → *Edit zone DNS* (for that zone) |
 | **Droplet** (`/etc/environment`) | ```bash
-LE_EMAIL=you@robertfisher.com
-CF_DNS_API_TOKEN=cf_xxxxxxxxxxxxxxxxx  
+LE_EMAIL=robert@robertfisher.com
+CLOUDFLARE_DNS_API_TOKEN=cf_xxxxxxxxxxxxxxxxx  
 MYSQL_ROOT_PASSWORD=prod-secret                         # keep DB pwd out of repo
 ``` |
 | **GitHub → repo → Settings → Secrets** | same three vars above (`LE_EMAIL`, `CF_DNS_API_TOKEN`, `MYSQL_ROOT_PASSWORD`) |
