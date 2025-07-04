@@ -8,6 +8,7 @@
 ---
 
 ## 1 Local workflow
+Copy `.env.example` to `.env` and fill in the values before starting the stack.
 
 | Goal | One‑liner | Opens in browser |
 |------|-----------|------------------|
