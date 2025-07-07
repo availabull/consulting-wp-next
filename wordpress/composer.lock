@@ -4,8 +4,62 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c0ce1620088dab1da38579d11c4a7255",
+    "content-hash": "5ec2c8f626af5f62217a1ce06056ece2",
     "packages": [
+        {
+            "name": "appsero/client",
+            "version": "v2.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Appsero/client.git",
+                "reference": "12ff65b9770286d21edf314e7acfcd26fdde3315"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Appsero/client/zipball/12ff65b9770286d21edf314e7acfcd26fdde3315",
+                "reference": "12ff65b9770286d21edf314e7acfcd26fdde3315",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6"
+            },
+            "require-dev": {
+                "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2",
+                "phpcompatibility/phpcompatibility-wp": "dev-master",
+                "phpunit/phpunit": "^8.5.31",
+                "squizlabs/php_codesniffer": "^3.7",
+                "tareq1988/wp-php-cs-fixer": "dev-master",
+                "wp-coding-standards/wpcs": "dev-develop"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Appsero\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tareq Hasan",
+                    "email": "tareq@appsero.com"
+                }
+            ],
+            "description": "Appsero Client",
+            "keywords": [
+                "analytics",
+                "plugin",
+                "theme",
+                "wordpress"
+            ],
+            "support": {
+                "issues": "https://github.com/Appsero/client/issues",
+                "source": "https://github.com/Appsero/client/tree/v2.0.4"
+            },
+            "time": "2024-11-25T05:58:23+00:00"
+        },
         {
             "name": "composer/installers",
             "version": "v2.3.0",
@@ -213,6 +267,51 @@
                 }
             ],
             "time": "2024-07-20T21:45:45+00:00"
+        },
+        {
+            "name": "ivome/graphql-relay-php",
+            "version": "v0.7.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ivome/graphql-relay-php.git",
+                "reference": "06bd176103618d896197d85d04a3a17c91e39698"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ivome/graphql-relay-php/zipball/06bd176103618d896197d85d04a3a17c91e39698",
+                "reference": "06bd176103618d896197d85d04a3a17c91e39698",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0",
+                "webonyx/graphql-php": "^14.0 || ^15.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.5",
+                "satooshi/php-coveralls": "~1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "A PHP port of GraphQL Relay reference implementation",
+            "homepage": "https://github.com/ivome/graphql-relay-php",
+            "keywords": [
+                "Relay",
+                "api",
+                "graphql"
+            ],
+            "support": {
+                "issues": "https://github.com/ivome/graphql-relay-php/issues",
+                "source": "https://github.com/ivome/graphql-relay-php/tree/v0.7.0"
+            },
+            "time": "2023-10-20T15:43:03+00:00"
         },
         {
             "name": "oscarotero/env",
@@ -693,6 +792,10 @@
                 }
             ],
             "description": "Collect configuration values and safely define() them",
+            "support": {
+                "issues": "https://github.com/roots/wp-config/issues",
+                "source": "https://github.com/roots/wp-config/tree/master"
+            },
             "time": "2018-08-10T14:18:38+00:00"
         },
         {
@@ -1017,6 +1120,224 @@
                 }
             ],
             "time": "2025-04-30T23:37:27+00:00"
+        },
+        {
+            "name": "webonyx/graphql-php",
+            "version": "v14.11.10",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/webonyx/graphql-php.git",
+                "reference": "d9c2fdebc6aa01d831bc2969da00e8588cffef19"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/webonyx/graphql-php/zipball/d9c2fdebc6aa01d831bc2969da00e8588cffef19",
+                "reference": "d9c2fdebc6aa01d831bc2969da00e8588cffef19",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "php": "^7.1 || ^8"
+            },
+            "require-dev": {
+                "amphp/amp": "^2.3",
+                "doctrine/coding-standard": "^6.0",
+                "nyholm/psr7": "^1.2",
+                "phpbench/phpbench": "^1.2",
+                "phpstan/extension-installer": "^1.0",
+                "phpstan/phpstan": "0.12.82",
+                "phpstan/phpstan-phpunit": "0.12.18",
+                "phpstan/phpstan-strict-rules": "0.12.9",
+                "phpunit/phpunit": "^7.2 || ^8.5",
+                "psr/http-message": "^1.0",
+                "react/promise": "2.*",
+                "simpod/php-coveralls-mirror": "^3.0"
+            },
+            "suggest": {
+                "psr/http-message": "To use standard GraphQL server",
+                "react/promise": "To leverage async resolving on React PHP platform"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "GraphQL\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A PHP port of GraphQL reference implementation",
+            "homepage": "https://github.com/webonyx/graphql-php",
+            "keywords": [
+                "api",
+                "graphql"
+            ],
+            "support": {
+                "issues": "https://github.com/webonyx/graphql-php/issues",
+                "source": "https://github.com/webonyx/graphql-php/tree/v14.11.10"
+            },
+            "funding": [
+                {
+                    "url": "https://opencollective.com/webonyx-graphql-php",
+                    "type": "open_collective"
+                }
+            ],
+            "time": "2023-07-05T14:23:37+00:00"
+        },
+        {
+            "name": "wp-graphql/wp-graphql",
+            "version": "v1.32.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/wp-graphql/wp-graphql.git",
+                "reference": "0c0000985c967f90bcca38276923a7d018d310e3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/wp-graphql/wp-graphql/zipball/0c0000985c967f90bcca38276923a7d018d310e3",
+                "reference": "0c0000985c967f90bcca38276923a7d018d310e3",
+                "shasum": ""
+            },
+            "require": {
+                "appsero/client": "2.0.4",
+                "ivome/graphql-relay-php": "0.7.0",
+                "php": "^7.1 || ^8.0",
+                "webonyx/graphql-php": "14.11.10"
+            },
+            "require-dev": {
+                "automattic/vipwpcs": "^3.0",
+                "codeception/module-asserts": "^1.0",
+                "codeception/module-cli": "^1.0",
+                "codeception/module-db": "^1.0",
+                "codeception/module-filesystem": "^1.0",
+                "codeception/module-phpbrowser": "^1.0",
+                "codeception/module-rest": "^1.2",
+                "codeception/module-webdriver": "^1.0",
+                "codeception/util-universalframework": "^1.0",
+                "lucatume/wp-browser": "<3.5",
+                "php-coveralls/php-coveralls": "^2.5",
+                "phpcompatibility/php-compatibility": "dev-develop as 9.9.9",
+                "phpcompatibility/phpcompatibility-wp": "^2.1",
+                "phpstan/extension-installer": "^1.1",
+                "phpstan/phpstan": "~1.12.12",
+                "phpstan/phpstan-deprecation-rules": "^1.2",
+                "phpunit/phpunit": "^9.5",
+                "slevomat/coding-standard": "^8.9",
+                "szepeviktor/phpstan-wordpress": "~1.3.0",
+                "wp-cli/wp-cli-bundle": "^2.8",
+                "wp-graphql/wp-graphql-testcase": "^3.0"
+            },
+            "type": "wordpress-plugin",
+            "autoload": {
+                "files": [],
+                "psr-4": {
+                    "WPGraphQL\\": "src/"
+                },
+                "classmap": [
+                    "src/WPGraphQL.php"
+                ]
+            },
+            "scripts": {
+                "install-test-env": [
+                    "bash bin/install-test-env.sh"
+                ],
+                "docker-build": [
+                    "bash bin/run-docker.sh build"
+                ],
+                "docker-run": [
+                    "bash bin/run-docker.sh run"
+                ],
+                "docker-destroy": [
+                    "docker compose down"
+                ],
+                "build-and-run": [
+                    "@docker-build",
+                    "@docker-run"
+                ],
+                "build-app": [
+                    "@docker-build -a"
+                ],
+                "build-test": [
+                    "@docker-build -t"
+                ],
+                "run-app": [
+                    "@docker-run -a"
+                ],
+                "run-test": [
+                    "@docker-run -t"
+                ],
+                "lint": [
+                    "vendor/bin/phpcs"
+                ],
+                "phpcs-i": [
+                    "php ./vendor/bin/phpcs -i"
+                ],
+                "check-cs": [
+                    "php ./vendor/bin/phpcs"
+                ],
+                "fix-cs": [
+                    "php ./vendor/bin/phpcbf"
+                ],
+                "phpstan": [
+                    "phpstan analyze --ansi --memory-limit=2G -v"
+                ],
+                "build-plugin": [
+                    "composer install --no-dev && composer run-script zip && composer install"
+                ],
+                "zip": [
+                    "mkdir -p plugin-build/wp-graphql",
+                    "rsync -rc --exclude-from=.distignore --exclude=plugin-build . plugin-build/wp-graphql/ --delete --delete-excluded -v",
+                    "cd plugin-build ; zip -r wp-graphql.zip wp-graphql",
+                    "rm -rf plugin-build/wp-graphql/"
+                ]
+            },
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Jason Bahl",
+                    "email": "jasonbahl@mac.com"
+                },
+                {
+                    "name": "Edwin Cromley"
+                },
+                {
+                    "name": "Ryan Kanner"
+                },
+                {
+                    "name": "Hughie Devore"
+                },
+                {
+                    "name": "Chris Zarate"
+                }
+            ],
+            "description": "GraphQL API for WordPress",
+            "support": {
+                "source": "https://github.com/wp-graphql/wp-graphql/tree/v1.32.1",
+                "issues": "https://github.com/wp-graphql/wp-graphql/issues"
+            },
+            "time": "2025-02-12T20:05:01+00:00"
+        },
+        {
+            "name": "wpackagist-plugin/wp-graphql",
+            "version": "1.32.1",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/wp-graphql/",
+                "reference": "tags/1.32.1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/wp-graphql.1.32.1.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/wp-graphql/"
         },
         {
             "name": "wpackagist-theme/twentytwentyfive",
