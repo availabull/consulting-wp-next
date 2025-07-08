@@ -18,7 +18,7 @@ services:
     environment:
       DB_NAME: wp
       DB_USER: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       DB_HOST: db
       WP_ENV:  ${WP_ENV:-production}
       WP_HOME: https://wp.robertfisher.com
