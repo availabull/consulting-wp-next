@@ -5,30 +5,30 @@ on:
     branches: [ main, master ]
 
 permissions:
-  contents: read          # for actions/checkout
-  packages: write         # allow ghcr.io push
+  contents: read          # checkout
+  packages: write         # push to GHCR
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    #──────────────────────── 1 · Checkout ────────────────────────
+    # ─────────────────────── 1 · Check‑out ────────────────────────
     - uses: actions/checkout@v4
 
-    #──────────────────────── 2 · Log in to GHCR ──────────────────
+    # ─────────────────────── 2 · GHCR login ───────────────────────
     - name: Log in to GHCR
       run: |
-        echo "${{ secrets.GITHUB_TOKEN }}" |
+        echo "${{ secrets.GITHUB_TOKEN }}" | \
         docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-    #──────────────────────── 3 · Build & push WordPress image ────
+    # ─────────────────────── 3 · Build & push WordPress ───────────
     - name: Build & push WordPress
       run: |
         docker build -t ghcr.io/${{ github.repository }}/wp:${{ github.sha }} wordpress
         docker push     ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
 
-    #──────────────────────── 4 · Build & push Next.js image ──────
+    # ─────────────────────── 4 · Build & push Next.js ─────────────
     - name: Build & push Next.js
       run: |
         docker build \
@@ -36,7 +36,7 @@ jobs:
           -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
         docker push     ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
-    #──────────────────────── 5 · Deploy on droplet ───────────────
+    # ─────────────────────── 5 · Deploy on droplet ────────────────
     - name: Deploy on droplet
       uses: appleboy/ssh-action@v1
       with:
@@ -44,12 +44,14 @@ jobs:
         username: root
         key:      ${{ secrets.DO_SSH_KEY }}
         script: |
-          set -e
+          set -eu
           mkdir -p /srv/consultancy
           cd /srv/consultancy
 
-          # ── overwrite docker‑compose.yml ───────────────────────
-          cat > docker-compose.yml <<'EOF'
+          # ---- overwrite docker‑compose.yml ----------------------
+          cat > docker-compose.yml <<'COMPOSE'
+          version: '3.9'
+
           services:
             db:
               image: mariadb:11
@@ -57,21 +59,21 @@ jobs:
               environment:
                 MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
                 MYSQL_DATABASE: wp
-              volumes: ["db:/var/lib/mysql"]
+              volumes: [ "db_data:/var/lib/mysql" ]
 
             wordpress:
               image: ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
               restart: unless-stopped
               environment:
-                DB_NAME: wp
-                DB_USER: root
+                DB_NAME:     wp
+                DB_USER:     root
                 DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-                DB_HOST: db
-                WP_ENV: production
-                WP_HOME: https://wp.robertfisher.com        # ← NEW
-                WP_SITEURL: https://wp.robertfisher.com/wp  # ← NEW
-              expose: ["80"]
-              volumes: ["uploads:/var/www/html/web/app/uploads"]
+                DB_HOST:     db
+                WP_ENV:      production
+                WP_HOME:     https://wp.robertfisher.com
+                WP_SITEURL:  https://wp.robertfisher.com/wp
+              expose: [ "80" ]
+              volumes: [ "uploads:/var/www/html/web/app/uploads" ]
               labels:
                 - traefik.enable=true
                 - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
@@ -85,7 +87,7 @@ jobs:
               restart: unless-stopped
               environment:
                 NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
-              expose: ["3000"]
+              expose: [ "3000" ]
               labels:
                 - traefik.enable=true
                 - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
@@ -96,8 +98,9 @@ jobs:
 
             traefik:
               image: traefik:3
+              restart: unless-stopped
               command:
-                - "--log.level=DEBUG"                     # drop to INFO after first success
+                - "--log.level=DEBUG"               # change to INFO later
                 - "--providers.docker=true"
                 - "--providers.docker.exposedbydefault=false"
                 - "--entrypoints.web.address=:80"
@@ -117,17 +120,17 @@ jobs:
                 - "le:/letsencrypt"
 
           volumes:
-            db:
+            db_data:
             uploads:
             le:
-          EOF
+          COMPOSE
 
-          # ── secrets (.env) ─────────────────────────────────────
-          cat > .env <<EOF
+          # ---- overwrite .env with secrets -----------------------
+          cat > .env <<ENV
           CLOUDFLARE_DNS_API_TOKEN=${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
           LE_EMAIL=${{ secrets.LE_EMAIL }}
           MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-          EOF
+          ENV
 
           docker compose pull
           docker compose up -d --remove-orphans
