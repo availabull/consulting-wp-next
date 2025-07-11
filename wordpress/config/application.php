@@ -4,40 +4,31 @@
  * Your base production configuration goes in this file. Environment‑specific
  * overrides go in their respective config/environments/{{WP_ENV}}.php file.
  *
- * A good default policy is to deviate from the production config as little as
- * possible. Try to define as much of your configuration in this file as you
- * can.
+ * Keep this file identical in every environment – only .env and the per‑env
+ * overrides should differ.
  */
 
 use Roots\WPConfig\Config;
-
 use function Env\env;
 
-// USE_ENV_ARRAY + CONVERT_* + STRIP_QUOTES
+// Tell vlucas/php‑dotenv to treat ENV as arrays, convert types, and strip quotes
 Env\Env::$options = 31;
 
 /**
- * Directory containing all of the site's files
- *
- * @var string
+ * -----------------------------------------------------------------
+ * Path constants
+ * -----------------------------------------------------------------
  */
-$root_dir = dirname(__DIR__);
+$root_dir   = dirname(__DIR__);         // repository root
+$webroot_dir = $root_dir . '/web';      // Apache DocumentRoot
 
 /**
- * Document Root
- *
- * @var string
- */
-$webroot_dir = $root_dir . '/web';
-
-/**
- * Use Dotenv to set required environment variables and load .env file in root
- * .env.local will override .env if it exists
+ * -----------------------------------------------------------------
+ * Load environment variables from .env / .env.local
+ * -----------------------------------------------------------------
  */
 if (file_exists($root_dir . '/.env')) {
-    $env_files = file_exists($root_dir . '/.env.local')
-        ? ['.env', '.env.local']
-        : ['.env'];
+    $env_files = file_exists($root_dir . '/.env.local') ? ['.env', '.env.local'] : ['.env'];
 
     $repository = Dotenv\Repository\RepositoryBuilder::createWithNoAdapters()
         ->addAdapter(Dotenv\Repository\Adapter\EnvConstAdapter::class)
@@ -49,39 +40,40 @@ if (file_exists($root_dir . '/.env')) {
     $dotenv->load();
 
     $dotenv->required(['WP_HOME', 'WP_SITEURL']);
+
+    // If DATABASE_URL is not present, require classic individual vars
     if (!env('DATABASE_URL')) {
         $dotenv->required(['DB_NAME', 'DB_USER', 'DB_PASSWORD']);
     }
 }
 
 /**
- * Set up our global environment constant and load its config first
- * Default: production
+ * -----------------------------------------------------------------
+ * Global environment & URLs
+ * -----------------------------------------------------------------
  */
 define('WP_ENV', env('WP_ENV') ?: 'production');
 
-/**
- * Infer WP_ENVIRONMENT_TYPE based on WP_ENV
- */
 if (!env('WP_ENVIRONMENT_TYPE') && in_array(WP_ENV, ['production', 'staging', 'development', 'local'])) {
     Config::define('WP_ENVIRONMENT_TYPE', WP_ENV);
 }
 
-/**
- * URLs
- */
-Config::define('WP_HOME', env('WP_HOME'));
+Config::define('WP_HOME',    env('WP_HOME'));
 Config::define('WP_SITEURL', env('WP_SITEURL'));
 
 /**
- * Custom Content Directory
+ * -----------------------------------------------------------------
+ * Custom content directory (Bedrock convention: /web/app)
+ * -----------------------------------------------------------------
  */
-Config::define('CONTENT_DIR', '/app');
-Config::define('WP_CONTENT_DIR', $webroot_dir . Config::get('CONTENT_DIR'));
-Config::define('WP_CONTENT_URL', Config::get('WP_HOME') . Config::get('CONTENT_DIR'));
+Config::define('CONTENT_DIR',      '/app');
+Config::define('WP_CONTENT_DIR',   $webroot_dir . Config::get('CONTENT_DIR'));
+Config::define('WP_CONTENT_URL',   Config::get('WP_HOME') . Config::get('CONTENT_DIR'));
 
 /**
- * DB settings
+ * -----------------------------------------------------------------
+ * Database
+ * -----------------------------------------------------------------
  */
 if (env('DB_SSL')) {
     Config::define('MYSQL_CLIENT_FLAGS', MYSQLI_CLIENT_SSL);
@@ -97,65 +89,75 @@ $table_prefix = env('DB_PREFIX') ?: 'wp_';
 
 if (env('DATABASE_URL')) {
     $dsn = (object) parse_url(env('DATABASE_URL'));
-
-    Config::define('DB_NAME', substr($dsn->path, 1));
-    Config::define('DB_USER', $dsn->user);
-    Config::define('DB_PASSWORD', isset($dsn->pass) ? $dsn->pass : null);
-    Config::define('DB_HOST', isset($dsn->port) ? "{$dsn->host}:{$dsn->port}" : $dsn->host);
+    Config::define('DB_NAME',     substr($dsn->path, 1));
+    Config::define('DB_USER',     $dsn->user);
+    Config::define('DB_PASSWORD', $dsn->pass ?? null);
+    Config::define('DB_HOST',     isset($dsn->port) ? "{$dsn->host}:{$dsn->port}" : $dsn->host);
 }
 
 /**
- * Authentication Unique Keys and Salts
+ * -----------------------------------------------------------------
+ * Authentication keys & salts
+ * -----------------------------------------------------------------
  */
-Config::define('AUTH_KEY', env('AUTH_KEY'));
-Config::define('SECURE_AUTH_KEY', env('SECURE_AUTH_KEY'));
-Config::define('LOGGED_IN_KEY', env('LOGGED_IN_KEY'));
-Config::define('NONCE_KEY', env('NONCE_KEY'));
-Config::define('AUTH_SALT', env('AUTH_SALT'));
-Config::define('SECURE_AUTH_SALT', env('SECURE_AUTH_SALT'));
-Config::define('LOGGED_IN_SALT', env('LOGGED_IN_SALT'));
-Config::define('NONCE_SALT', env('NONCE_SALT'));
+Config::define('AUTH_KEY',          env('AUTH_KEY'));
+Config::define('SECURE_AUTH_KEY',   env('SECURE_AUTH_KEY'));
+Config::define('LOGGED_IN_KEY',     env('LOGGED_IN_KEY'));
+Config::define('NONCE_KEY',         env('NONCE_KEY'));
+Config::define('AUTH_SALT',         env('AUTH_SALT'));
+Config::define('SECURE_AUTH_SALT',  env('SECURE_AUTH_SALT'));
+Config::define('LOGGED_IN_SALT',    env('LOGGED_IN_SALT'));
+Config::define('NONCE_SALT',        env('NONCE_SALT'));
 
 /**
- * Custom Settings
+ * -----------------------------------------------------------------
+ * Custom settings
+ * -----------------------------------------------------------------
  */
-Config::define('AUTOMATIC_UPDATER_DISABLED', true);
-Config::define('DISABLE_WP_CRON', env('DISABLE_WP_CRON') ?: false);
+Config::define('AUTOMATIC_UPDATER_DISABLED', true);                     // core updates come via Docker
+Config::define('DISABLE_WP_CRON',         env('DISABLE_WP_CRON') ?: false);
 
-/** ───── ADD THIS LINE ───── */
-Config::define('FS_METHOD', 'direct');        // allow direct writes inside the container
-/** ───────────────────────── */
+/** ───── FILESYSTEM ───────────────────────────────────────────────
+ *  Allow WordPress & WP‑CLI to write directly inside the container
+ *  (no FTP prompts, fixes Site Health “Could not access filesystem”)
+ */
+Config::define('FS_METHOD', 'direct');
 
-// Disable the plugin and theme file editor in the admin
-Config::define('DISALLOW_FILE_EDIT', true);
+/**
+ * Security‑hardening helpers
+ */
+Config::define('DISALLOW_FILE_EDIT',  true);   // no Appearance → Editor
+Config::define('DISALLOW_FILE_MODS',  true);   // themes/plugins only via CI
 
-// Disable plugin and theme updates and installation from the admin
-Config::define('DISALLOW_FILE_MODS', true);
-
-// Limit the number of post revisions
-Config::define('WP_POST_REVISIONS', env('WP_POST_REVISIONS') ?? true);
-
-// Disable script concatenation
+/**
+ * Performance / housekeeping
+ */
+Config::define('WP_POST_REVISIONS',   env('WP_POST_REVISIONS') ?? true);
 Config::define('CONCATENATE_SCRIPTS', false);
 
 /**
- * Debugging Settings
+ * -----------------------------------------------------------------
+ * Debug
+ * -----------------------------------------------------------------
  */
 Config::define('WP_DEBUG_DISPLAY', false);
-Config::define('WP_DEBUG_LOG', false);
-Config::define('SCRIPT_DEBUG', false);
+Config::define('WP_DEBUG_LOG',     false);
+Config::define('SCRIPT_DEBUG',     false);
 ini_set('display_errors', '0');
 
 /**
- * Allow WordPress to detect HTTPS when used behind a reverse proxy or a load balancer
- * See https://codex.wordpress.org/Function_Reference/is_ssl#Notes
+ * Behind reverse proxy TLS (Traefik)
  */
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
     $_SERVER['HTTPS'] = 'on';
 }
 
+/**
+ * -----------------------------------------------------------------
+ * Per‑environment overrides
+ * -----------------------------------------------------------------
+ */
 $env_config = __DIR__ . '/environments/' . WP_ENV . '.php';
-
 if (file_exists($env_config)) {
     require_once $env_config;
 }
@@ -163,7 +165,9 @@ if (file_exists($env_config)) {
 Config::apply();
 
 /**
+ * -----------------------------------------------------------------
  * Bootstrap WordPress
+ * -----------------------------------------------------------------
  */
 if (!defined('ABSPATH')) {
     define('ABSPATH', $webroot_dir . '/wp/');
