@@ -1,29 +1,29 @@
-# Application
-web/app/plugins/*
-!web/app/plugins/.gitkeep
-web/app/mu-plugins/*/
-web/app/themes/twentytwentyfive/
-web/app/upgrade
+# ─── Bedrock uploads / caches ───────────────────────────────
 web/app/uploads/*
 !web/app/uploads/.gitkeep
 web/app/cache/*
 
-# WordPress
-web/wp
+# ─── WordPress default content we manage elsewhere ──────────
+web/wp/
 web/.htaccess
 
-# Logs
+# ─── Optional demo theme & build artefacts ──────────────────
+web/app/themes/twentytwentyfive/
+
+# ─── Third‑party plugins shipped as zips go here; keep empty dir
+web/app/plugins/*.zip
+
+# ─── Logs ───────────────────────────────────────────────────
 *.log
 
-# Dotenv
+# ─── Environment & auth files (never commit secrets) ───────
 .env
 .env.*
-!.env.example
-
-# Composer
-/vendor
 auth.json
 
-# WP-CLI
+# ─── Composer vendor (built in CI / Docker) ─────────────────
+/vendor/
+
+# ─── WP‑CLI local overrides (developer only) ───────────────
 wp-cli.local.yml
-/.env
+

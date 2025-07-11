@@ -1,28 +1,30 @@
 # docker‑compose.yml — production stack, Traefik + automatic HTTPS
+version: '3.9'
+
 services:
-  # ─── MariaDB ─────────────────────────────────────────────────────────
+  # ─── MariaDB ────────────────────────────────────────────────────────
   db:
     image: mariadb:11
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}   # ← comes from .env
       MYSQL_DATABASE: wp
     volumes:
       - db_data:/var/lib/mysql
 
-  # ─── WordPress / Bedrock  →  https://wp.robertfisher.com ────────────
+  # ─── WordPress / Bedrock  →  https://wp.robertfisher.com ───────────
   wordpress:
-    build: ./wordpress            # local dev build; CI builds again
+    build: ./wordpress                   # CI builds again, local dev OK
     restart: unless-stopped
     expose: ["80"]
     environment:
-      DB_NAME: wp
-      DB_USER: root
+      DB_NAME:     wp
+      DB_USER:     root
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      DB_HOST: db
-      WP_ENV:  ${WP_ENV:-production}
-      WP_HOME: https://wp.robertfisher.com
-      WP_SITEURL: https://wp.robertfisher.com/wp
+      DB_HOST:     db
+      WP_ENV:      ${WP_ENV:-production}
+      WP_HOME:     https://wp.robertfisher.com
+      WP_SITEURL:  https://wp.robertfisher.com/wp
     volumes:
       - uploads:/var/www/html/web/app/uploads
     labels:
@@ -33,7 +35,7 @@ services:
       - traefik.http.services.wp.loadbalancer.server.port=80
     depends_on: [db]
 
-  # ─── Next.js front‑end  →  https://robertfisher.com ────────────────
+  # ─── Next.js front‑end  →  https://robertfisher.com ───────────────
   next:
     build:
       context: ./nextjs-site
@@ -51,12 +53,12 @@ services:
       - traefik.http.services.next.loadbalancer.server.port=3000
     depends_on: [wordpress]
 
-  # ─── Traefik v3 — reverse‑proxy + ACME DNS‑01 via Cloudflare ───────
+  # ─── Traefik v3 — reverse‑proxy + ACME DNS‑01 via Cloudflare ──────
   traefik:
     image: traefik:3
     restart: unless-stopped
     command:
-      - "--log.level=DEBUG"                   # DEBUG until SSL issue solved
+      - "--log.level=DEBUG"                         # flip to INFO later
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"

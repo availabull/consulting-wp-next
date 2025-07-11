@@ -1,22 +1,30 @@
-# Mac / IDE cruft
+# ────────────────────────── Mac / IDE cruft ─────────────────────────
 .DS_Store
 .vscode/
+.idea/
 
-# Node / Next.js
+# ────────────────────────── Node / Next.js ──────────────────────────
 node_modules/
 .next/
 out/
 
-# Docker artefacts
-db_data/
-uploads/
+# ────────────────────────── Docker volumes ──────────────────────────
+db_data/          # named volume mapped into ./db_data (if you ever bind‑mount)
+uploads/          # local bind‑mount of WP uploads
 
-# Dot‑env (already ignored in sub‑repo but safe to repeat)
-.env
-/wordpress/.env
-
-# Log files at project root
-*.log
-
-# Composer & WP uploads
+# ────────────────────────── Composer artefacts ──────────────────────
 wordpress/vendor/
+
+# ────────────────────────── Runtime artefacts (any stack) ───────────
+*.log
+*.tmp
+tmp/
+
+# ────────────────────────── Environment files ───────────────────────
+.env
+.env.*
+wordpress/.env        # if someone creates a runtime .env inside WP
+
+# ────────────────────────── Version‑control artefacts ───────────────
+.git
+.gitignore

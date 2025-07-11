@@ -1,27 +1,25 @@
-# Ignore version control
+# ─── never send Git history ─────────────────────────────────
 .git
 .gitignore
 
-# Dependencies
-node_modules
-vendor
+# ─── dev/IDE artefacts ─────────────────────────────────────
+*.log
+*.tmp
+tmp/
+.DS_Store
+.vscode/
+.idea/
 
-# WordPress runtime directories
+# ─── big folders regenerated at runtime ────────────────────
 web/app/uploads
 web/app/cache
 web/wp
-web/.htaccess
 
-# Logs and temp files
-*.log
-*.tmp
-tmp
-
-# Environment files
+# ─── local env files (build args are used instead) ─────────
 .env
 .env.*
+auth.json
 
-# Editor directories
-.vscode
-.idea
-.DS_Store
+# ─── dependencies already installed in build stage ─────────
+node_modules
+vendor
