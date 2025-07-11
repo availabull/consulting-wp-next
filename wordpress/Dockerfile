@@ -1,5 +1,6 @@
 # ───────────────────────── 1) Build stage ──────────────────────────
-FROM composer:2.7 AS composer               # official Composer image
+# official Composer image
+FROM composer:2.7 AS composer
 
 WORKDIR /app
 
@@ -11,26 +12,27 @@ RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-progress
 COPY . .
 
 # ───────────────────────── 2) Runtime stage ────────────────────────
+# official WordPress + PHP 8.3 image
 FROM wordpress:php8.3-apache
 
-# ── make /web the document root ────────────────────────────────────
+# make /web the document root
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/web
 RUN sed -ri -e 's!/var/www/html!/var/www/html/web!g' \
       /etc/apache2/sites-available/000-default.conf
 
-# ── PHP extensions Bedrock / plugins need ──────────────────────────
+# PHP extensions Bedrock / plugins need
 RUN docker-php-ext-install pdo_mysql
 
-# ── NEW: tools needed inside the container ─────────────────────────
+# NEW: tools required at runtime (MariaDB client + WP‑CLI)
 RUN apt-get update -qq \
  && apt-get install -y --no-install-recommends mariadb-client \
  && rm -rf /var/lib/apt/lists/* \
  && curl -sSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
       -o /usr/local/bin/wp && chmod +x /usr/local/bin/wp
 
-# ── copy built application into place ──────────────────────────────
+# copy Bedrock and vendor directory from build stage
 WORKDIR /var/www/html
 COPY --from=composer /app ./
 COPY --from=composer /app/vendor ./vendor
 
-# (optional)  COPY .env .env   # if you ever want to bake it in
+# (optional) COPY .env .env   # if you ever want to bake it in
