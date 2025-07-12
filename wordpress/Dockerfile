@@ -23,7 +23,7 @@ RUN sed -ri -e 's!/var/www/html!/var/www/html/web!g' \
 # ─── PHP extensions & tools ────────────────────────────────────────
 RUN docker-php-ext-install pdo_mysql
 
-# add unzip + curl so we can fetch the Hello theme
+# add unzip + curl so we can fetch the Hello theme + WP‑CLI
 RUN apt-get update -qq \
  && apt-get install -y --no-install-recommends mariadb-client unzip curl \
  && rm -rf /var/lib/apt/lists/* \
@@ -44,8 +44,8 @@ RUN curl -sSL https://downloads.wordpress.org/theme/hello-elementor.zip \
  && unzip -q /tmp/hello.zip -d web/app/themes \
  && rm /tmp/hello.zip
 
-# ─── remove bundled Twenty* themes so only Hello ships ─────────────
-RUN rm -rf web/wp/wp-content/themes/twenty*
+# ─── remove all bundled Twenty* themes so only Hello ships ─────────
+RUN rm -rf /var/www/html/web/wp/wp-content/themes/twenty*
 
 # ─── correct ownership of everything we touched ────────────────────
 RUN chown -R www-data:www-data /var/www/html/web/app

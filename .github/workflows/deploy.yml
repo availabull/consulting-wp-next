@@ -1,3 +1,4 @@
+# .github/workflows/deploy.yml
 name: Deploy stack
 
 on:
@@ -11,7 +12,6 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
     # ────────────────── 1 · Checkout ──────────────────
     - uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
     - name: Build & push WordPress
       run: |
         docker build -t ghcr.io/${{ github.repository }}/wp:${{ github.sha }} wordpress
-        docker push     ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
+        docker push ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
 
     # ────────────────── 4 · Build & push Next.js ──────
     - name: Build & push Next.js
@@ -34,7 +34,7 @@ jobs:
         docker build \
           --build-arg NEXT_PUBLIC_WPGRAPHQL_URL=http://wordpress/graphql \
           -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
-        docker push     ghcr.io/${{ github.repository }}/next:${{ github.sha }}
+        docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
     # ────────────────── 5 · Deploy on droplet ─────────
     - name: Deploy on droplet
@@ -48,7 +48,7 @@ jobs:
           mkdir -p /srv/consultancy
           cd /srv/consultancy
 
-          # ─── automatic weekly Docker‑prune cron (runs once) ─────
+          # ─── install weekly prune cron (runs once) ───────────────
           if [ ! -f /etc/cron.weekly/docker-prune ]; then
             printf '%s\n' \
               '#!/usr/bin/env bash' \
@@ -57,13 +57,12 @@ jobs:
             chmod +x /etc/cron.weekly/docker-prune
           fi
 
-          # ─── opportunistic prune each deploy ────────────────────
+          # ─── opportunistic prune on every deploy ────────────────
           docker image prune -af || true
 
-          # ---------- docker‑compose.yml ----------
+          # --------------- docker‑compose.yml ----------------------
           cat > docker-compose.yml <<'COMPOSE'
           version: '3.9'
-
           services:
             db:
               image: mariadb:11
@@ -76,17 +75,15 @@ jobs:
             wordpress:
               image: ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
               restart: unless-stopped
-              env_file:
-                - .env          # safe vars for Compose itself
-                - stack.env     # salts & keys (may contain $)
+              env_file: [ ".env", "stack.env" ]
               environment:
-                DB_NAME:     wp
-                DB_USER:     root
+                DB_NAME: wp
+                DB_USER: root
                 DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-                DB_HOST:     db
-                WP_ENV:      production
-                WP_HOME:     https://wp.robertfisher.com
-                WP_SITEURL:  https://wp.robertfisher.com/wp
+                DB_HOST: db
+                WP_ENV: production
+                WP_HOME: https://wp.robertfisher.com
+                WP_SITEURL: https://wp.robertfisher.com/wp
               expose: [ "80" ]
               volumes: [ "uploads:/var/www/html/web/app/uploads" ]
               labels:
@@ -133,21 +130,20 @@ jobs:
               volumes:
                 - "/var/run/docker.sock:/var/run/docker.sock:ro"
                 - le:/letsencrypt
-
           volumes:
             db_data:
             uploads:
             le:
           COMPOSE
 
-          # ---------- .env (only interpolation‑safe vars) ----------
+          # ----------------- .env (safe vars) ----------------------
           cat > .env <<ENV
           CLOUDFLARE_DNS_API_TOKEN=${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
           LE_EMAIL=${{ secrets.LE_EMAIL }}
           MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
           ENV
 
-          # ---------- stack.env (salts & keys, $ → $$) ----------
+          # ----------------- stack.env (salts) ---------------------
           cat > stack.env <<'STACK'
           AUTH_KEY=${{ secrets.AUTH_KEY }}
           SECURE_AUTH_KEY=${{ secrets.SECURE_AUTH_KEY }}
@@ -174,32 +170,25 @@ jobs:
         script: |
           set -eu
           cd /srv/consultancy
-
-          # remove Hello Dolly (if still present)
+          # remove Hello Dolly (if present)
           docker compose exec --user www-data wordpress \
             wp plugin delete hello || true
-
-          # update plugins & themes
+          # update everything
           docker compose exec --user www-data wordpress \
             wp plugin update --all || true
           docker compose exec --user www-data wordpress \
             wp theme  update --all  || true
-
-          # ensure WP‑GraphQL is active
+          # guarantee WP‑GraphQL + cache plugin
           docker compose exec --user www-data wordpress \
             wp plugin activate wp-graphql || true
-
-          # ensure Hello theme present & active
-          docker compose exec --user www-data wordpress \
-            wp theme install hello-elementor --activate || true
-
-          # remove all Twenty* themes to prevent fallback warnings
-          docker compose exec --user www-data wordpress \
-            wp theme delete twentytwentyfive twentytwentyfour twentytwentythree twentytwentytwo || true
-
-          # install & activate cache plugin once
           if ! docker compose exec --user www-data wordpress \
                wp plugin is-installed wp-super-cache > /dev/null 2>&1 ; then
             docker compose exec --user www-data wordpress \
               wp plugin install wp-super-cache --activate
           fi
+          # ensure Hello installed & active
+          docker compose exec --user www-data wordpress \
+            wp theme install hello-elementor --activate || true
+          # remove any Twenty* themes (safety‑net)
+          docker compose exec --user www-data wordpress \
+            wp theme delete $(docker compose exec --user www-data wordpress wp theme list --status=inactive --field=name | grep '^twenty' || true) || true
