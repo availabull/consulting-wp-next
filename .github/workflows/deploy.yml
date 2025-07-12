@@ -48,16 +48,16 @@ jobs:
           mkdir -p /srv/consultancy
           cd /srv/consultancy
 
-          # ─── automatic weekly Docker‑prune cron (once) ──────────
+          # ─── automatic weekly Docker‑prune cron (runs once) ─────
           if [ ! -f /etc/cron.weekly/docker-prune ]; then
-            cat > /etc/cron.weekly/docker-prune <<'PRUNE'
-#!/usr/bin/env bash
-docker image prune -af --filter "until=168h"    # prune images older than 7 days
-PRUNE
+            printf '%s\n' \
+              '#!/usr/bin/env bash' \
+              'docker image prune -af --filter "until=168h"' \
+              > /etc/cron.weekly/docker-prune
             chmod +x /etc/cron.weekly/docker-prune
           fi
 
-          # ─── opportunistic prune each deploy (keeps runs light) ─
+          # ─── opportunistic prune each deploy ────────────────────
           docker image prune -af || true
 
           # ---------- docker‑compose.yml ----------
