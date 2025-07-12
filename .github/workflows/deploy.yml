@@ -48,6 +48,18 @@ jobs:
           mkdir -p /srv/consultancy
           cd /srv/consultancy
 
+          # ─── automatic weekly Docker‑prune cron (once) ──────────
+          if [ ! -f /etc/cron.weekly/docker-prune ]; then
+            cat > /etc/cron.weekly/docker-prune <<'PRUNE'
+#!/usr/bin/env bash
+docker image prune -af --filter "until=168h"    # prune images older than 7 days
+PRUNE
+            chmod +x /etc/cron.weekly/docker-prune
+          fi
+
+          # ─── opportunistic prune each deploy (keeps runs light) ─
+          docker image prune -af || true
+
           # ---------- docker‑compose.yml ----------
           cat > docker-compose.yml <<'COMPOSE'
           version: '3.9'
@@ -163,7 +175,7 @@ jobs:
           set -eu
           cd /srv/consultancy
 
-          # remove Hello Dolly (if still present)
+          # remove Hello Dolly (if still present)
           docker compose exec --user www-data wordpress \
             wp plugin delete hello || true
 
@@ -171,17 +183,17 @@ jobs:
           docker compose exec --user www-data wordpress \
             wp plugin update --all || true
           docker compose exec --user www-data wordpress \
-            wp theme  update --all || true
+            wp theme  update --all  || true
 
           # ensure WP‑GraphQL is active
           docker compose exec --user www-data wordpress \
             wp plugin activate wp-graphql || true
 
-          # ensure Hello theme is present & active
+          # ensure Hello theme present & active
           docker compose exec --user www-data wordpress \
             wp theme install hello-elementor --activate || true
 
-          # remove all Twenty* themes to prevent fallback
+          # remove all Twenty* themes to prevent fallback warnings
           docker compose exec --user www-data wordpress \
             wp theme delete twentytwentyfive twentytwentyfour twentytwentythree twentytwentytwo || true
 
