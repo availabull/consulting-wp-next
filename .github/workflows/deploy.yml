@@ -5,30 +5,30 @@ on:
     branches: [ main, master ]
 
 permissions:
-  contents: read          # checkout
-  packages: write         # push to GHCR
+  contents: read
+  packages: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # ─────────────────────── 1 · Check‑out ────────────────────────
+    # ────────────────── 1 · Checkout ──────────────────
     - uses: actions/checkout@v4
 
-    # ─────────────────────── 2 · GHCR login ───────────────────────
+    # ────────────────── 2 · GHCR login ────────────────
     - name: Log in to GHCR
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | \
         docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-    # ─────────────────────── 3 · Build & push WordPress ───────────
+    # ────────────────── 3 · Build & push WordPress ────
     - name: Build & push WordPress
       run: |
         docker build -t ghcr.io/${{ github.repository }}/wp:${{ github.sha }} wordpress
         docker push     ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
 
-    # ─────────────────────── 4 · Build & push Next.js ─────────────
+    # ────────────────── 4 · Build & push Next.js ──────
     - name: Build & push Next.js
       run: |
         docker build \
@@ -36,7 +36,7 @@ jobs:
           -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
         docker push     ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
-    # ─────────────────────── 5 · Deploy on droplet ────────────────
+    # ────────────────── 5 · Deploy on droplet ─────────
     - name: Deploy on droplet
       uses: appleboy/ssh-action@v1
       with:
@@ -48,7 +48,7 @@ jobs:
           mkdir -p /srv/consultancy
           cd /srv/consultancy
 
-          # ---- overwrite docker‑compose.yml ----------------------
+          # ---------- docker‑compose.yml ----------
           cat > docker-compose.yml <<'COMPOSE'
           version: '3.9'
 
@@ -64,7 +64,9 @@ jobs:
             wordpress:
               image: ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
               restart: unless-stopped
-              env_file: [ ".env" ]
+              env_file:
+                - .env          # safe vars for Compose itself
+                - stack.env     # salts & keys (may contain $)
               environment:
                 DB_NAME:     wp
                 DB_USER:     root
@@ -126,12 +128,15 @@ jobs:
             le:
           COMPOSE
 
-          # ---- overwrite .env with secrets -----------------------
-          # single‑quoted heredoc prevents Bash from interpreting $, ``, or $( )
-          cat > .env <<'ENV'
+          # ---------- .env (only interpolation‑safe vars) ----------
+          cat > .env <<ENV
           CLOUDFLARE_DNS_API_TOKEN=${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
           LE_EMAIL=${{ secrets.LE_EMAIL }}
           MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+          ENV
+
+          # ---------- stack.env (salts & any char allowed) ----------
+          cat > stack.env <<'STACK'
           AUTH_KEY=${{ secrets.AUTH_KEY }}
           SECURE_AUTH_KEY=${{ secrets.SECURE_AUTH_KEY }}
           LOGGED_IN_KEY=${{ secrets.LOGGED_IN_KEY }}
@@ -140,12 +145,12 @@ jobs:
           SECURE_AUTH_SALT=${{ secrets.SECURE_AUTH_SALT }}
           LOGGED_IN_SALT=${{ secrets.LOGGED_IN_SALT }}
           NONCE_SALT=${{ secrets.NONCE_SALT }}
-          ENV
+          STACK
 
           docker compose pull
           docker compose up -d --remove-orphans
 
-    # ─────────────────────── 6 · WP‑CLI maintenance ───────────────
+    # ────────────────── 6 · WP‑CLI tidy‑up ─────────────
     - name: One‑shot WP‑CLI maintenance
       uses: appleboy/ssh-action@v1
       if: success()
