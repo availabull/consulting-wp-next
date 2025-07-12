@@ -7,3 +7,4 @@ add_filter( 'site_status_tests', function ( $tests ) {
     unset( $tests['async']['wordpress_filesystem'] );
     return $tests;
 } );
+ 

@@ -2,17 +2,17 @@
 version: '3.9'
 
 services:
-  # ─── MariaDB ─────────────────────────────────────────────────────
+  # ─── MariaDB ────────────────────────────────────────────────────
   db:
     image: mariadb:11
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}   # local default
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
       MYSQL_DATABASE: wp
     volumes:
       - db_data:/var/lib/mysql
 
-  # ─── WordPress / Bedrock  →  http://wp.robertfisher.com OR http://localhost:8080/wp
+  # ─── WordPress / Bedrock ───────────────────────────────────────
   wordpress:
     build: ./wordpress
     restart: unless-stopped
@@ -23,7 +23,6 @@ services:
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
       DB_HOST:     db
       WP_ENV:      ${WP_ENV:-development}
-      # Dev fallback URLs
       WP_HOME:     ${WP_HOME:-http://localhost:8080}
       WP_SITEURL:  ${WP_SITEURL:-http://localhost:8080/wp}
     volumes:
@@ -31,20 +30,20 @@ services:
     labels:
       - traefik.enable=true
 
-      # ── production router (unchanged)
+      # production router
       - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
       - traefik.http.routers.wp.entrypoints=websecure
       - traefik.http.routers.wp.tls.certresolver=cf
       - traefik.http.services.wp.loadbalancer.server.port=80
 
-      # ── localhost router — only WP‑specific paths
+      # localhost router — only WP paths
       - traefik.http.routers.wp-local.rule=Host(`localhost`) && ( PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`) )
       - traefik.http.routers.wp-local.entrypoints=web
-      - traefik.http.routers.wp-local.priority=12        # outranks next-local
+      - traefik.http.routers.wp-local.priority=12
 
-    depends_on: [db]
+    depends_on: [ db ]
 
-  # ─── Next.js front‑end  →  http://robertfisher.com OR http://localhost:8080
+  # ─── Next.js front‑end ─────────────────────────────────────────
   next:
     build:
       context: ./nextjs-site
@@ -57,21 +56,21 @@ services:
     labels:
       - traefik.enable=true
 
-      # production router (unchanged)
+      # production router
       - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
       - traefik.http.routers.next.entrypoints=websecure
       - traefik.http.routers.next.tls.certresolver=cf
       - traefik.http.services.next.loadbalancer.server.port=3000
 
-      # localhost router — matches everything else
+      # localhost router — catch‑all
       - traefik.http.routers.next-local.rule=Host(`localhost`)
       - traefik.http.routers.next-local.entrypoints=web
-      - traefik.http.routers.next-local.priority=10        # lower than wp-local
+      - traefik.http.routers.next-local.priority=10
       - traefik.http.services.next.loadbalancer.server.port=3000
 
-    depends_on: [wordpress]
+    depends_on: [ wordpress ]
 
-  # ─── Traefik v3 — reverse‑proxy for dev + ACME for prod ─────────
+  # ─── Traefik v3 — reverse proxy ───────────────────────────────
   traefik:
     image: traefik:3
     restart: unless-stopped
@@ -79,10 +78,8 @@ services:
       - "--log.level=DEBUG"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      # entrypoints
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      # ACME DNS‑01 (prod only)
       - "--certificatesresolvers.cf.acme.dnschallenge=true"
       - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
       - "--certificatesresolvers.cf.acme.email=${LE_EMAIL:-local@example.com}"
@@ -91,10 +88,10 @@ services:
       CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN:-dev}
       LE_EMAIL: ${LE_EMAIL:-local@example.com}
     ports:
-      - "80:80"        # prod+dev
-      - "8080:80"      # http://localhost:8080  ← easiest dev entry
+      - "80:80"
+      - "8080:80"
       - "443:443"
-      - "8443:443"     # https://localhost:8443 (self‑signed)
+      - "8443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - le:/letsencrypt
