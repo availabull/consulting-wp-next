@@ -135,7 +135,7 @@ jobs:
           MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
           ENV
 
-          # ---------- stack.env (salts & any char allowed) ----------
+          # ---------- stack.env (salts & keys, $ → $$) ----------
           cat > stack.env <<'STACK'
           AUTH_KEY=${{ secrets.AUTH_KEY }}
           SECURE_AUTH_KEY=${{ secrets.SECURE_AUTH_KEY }}
@@ -146,6 +146,7 @@ jobs:
           LOGGED_IN_SALT=${{ secrets.LOGGED_IN_SALT }}
           NONCE_SALT=${{ secrets.NONCE_SALT }}
           STACK
+          perl -pi -e 's/\$/\$\$/g' stack.env    # escape $ for Compose
 
           docker compose pull
           docker compose up -d --remove-orphans
