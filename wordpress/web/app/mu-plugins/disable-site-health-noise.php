@@ -1,25 +1,28 @@
 <?php
 /**
- * Bedrock / Docker: hide Site‑Health items that are irrelevant in an
+ * Bedrock / Docker: hide Site‑Health items that are irrelevant in an
  * immutable, image‑based deployment.
  *
- * - background_updates    → core auto‑updates are intentionally disabled
- * - wordpress_filesystem  → core files are read‑only by design
- *
- * Any new tests can be nulled by adding their slug to $disabled.
+ * Disabled tests:
+ * - background_updates    → core auto‑updates disabled (image handles it)
+ * - wordpress_filesystem  → core is read‑only on purpose
+ * - plugin_version        → we update/activate plugins via CI
+ * - page_cache            → handled by WP Super Cache + Cloudflare
  */
 
 add_filter( 'site_status_tests', function ( $tests ) {
 
     $disabled = [
-        'background_updates',   // key lives in $tests['direct']
-        'wordpress_filesystem', // key lives in $tests['async']
+        'background_updates',   // $tests['direct']
+        'wordpress_filesystem', // $tests['async']
+        'plugin_version',       // $tests['async']
+        'page_cache',           // $tests['async']
     ];
 
     foreach ( $tests as $group => $group_tests ) {
-        foreach ( $group_tests as $index => $test ) {
-            if ( in_array( $index, $disabled, true ) ) {
-                unset( $tests[ $group ][ $index ] );
+        foreach ( $group_tests as $slug => $test ) {
+            if ( in_array( $slug, $disabled, true ) ) {
+                unset( $tests[ $group ][ $slug ] );
             }
         }
     }

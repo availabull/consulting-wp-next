@@ -120,7 +120,7 @@ jobs:
                 - "443:443"
               volumes:
                 - "/var/run/docker.sock:/var/run/docker.sock:ro"
-                - "le:/letsencrypt"
+                - le:/letsencrypt
 
           volumes:
             db_data:
@@ -162,12 +162,29 @@ jobs:
         script: |
           set -eu
           cd /srv/consultancy
+
+          # remove Hello Dolly (if still present)
           docker compose exec --user www-data wordpress \
             wp plugin delete hello || true
+
+          # update all plugins & themes
           docker compose exec --user www-data wordpress \
             wp plugin update --all || true
+          docker compose exec --user www-data wordpress \
+            wp theme  update --all || true
+
+          # ensure WP‑GraphQL is active
+          docker compose exec --user www-data wordpress \
+            wp plugin activate wp-graphql || true
+
+          # ensure Hello theme is installed & active
+          docker compose exec --user www-data wordpress \
+            wp theme install hello-elementor --activate || true
+
+          # install & activate cache plugin once
           if ! docker compose exec --user www-data wordpress \
                wp plugin is-installed wp-super-cache > /dev/null 2>&1 ; then
             docker compose exec --user www-data wordpress \
               wp plugin install wp-super-cache --activate
           fi
+ 
