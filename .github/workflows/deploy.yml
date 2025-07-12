@@ -167,7 +167,7 @@ jobs:
           docker compose exec --user www-data wordpress \
             wp plugin delete hello || true
 
-          # update all plugins & themes
+          # update plugins & themes
           docker compose exec --user www-data wordpress \
             wp plugin update --all || true
           docker compose exec --user www-data wordpress \
@@ -177,9 +177,13 @@ jobs:
           docker compose exec --user www-data wordpress \
             wp plugin activate wp-graphql || true
 
-          # ensure Hello theme is installed & active
+          # ensure Hello theme is present & active
           docker compose exec --user www-data wordpress \
             wp theme install hello-elementor --activate || true
+
+          # remove all Twenty* themes to prevent fallback
+          docker compose exec --user www-data wordpress \
+            wp theme delete twentytwentyfive twentytwentyfour twentytwentythree twentytwentytwo || true
 
           # install & activate cache plugin once
           if ! docker compose exec --user www-data wordpress \
@@ -187,4 +191,3 @@ jobs:
             docker compose exec --user www-data wordpress \
               wp plugin install wp-super-cache --activate
           fi
- 

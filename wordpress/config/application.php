@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Your base production configuration goes in this file. Environment‑specific
  * overrides go in their respective config/environments/{{WP_ENV}}.php file.
@@ -119,9 +118,11 @@ Config::define('DISABLE_WP_CRON',         env('DISABLE_WP_CRON') ?: false);
 
 /** ───── FILESYSTEM ───────────────────────────────────────────────
  *  Allow WordPress & WP‑CLI to write directly inside the container
- *  (no FTP prompts, fixes Site Health “Could not access filesystem”)
  */
 Config::define('FS_METHOD', 'direct');
+
+/** ───── Default theme ──────────────────────────────────────────── */
+Config::define('WP_DEFAULT_THEME', 'hello-elementor');
 
 /**
  * Security‑hardening helpers

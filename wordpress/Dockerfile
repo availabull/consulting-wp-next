@@ -25,7 +25,7 @@ RUN docker-php-ext-install pdo_mysql
 
 # NEW: tools required at runtime (MariaDB client + WP‑CLI)
 RUN apt-get update -qq \
- && apt-get install -y --no-install-recommends mariadb-client \
+ && apt-get install -y --no-install-recommends mariadb-client unzip curl \
  && rm -rf /var/lib/apt/lists/* \
  && curl -sSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
       -o /usr/local/bin/wp && chmod +x /usr/local/bin/wp
@@ -36,8 +36,16 @@ COPY --from=composer /app ./
 COPY --from=composer /app/vendor ./vendor
 
 # ── NEW: pre‑create wp‑content/upgrade so Site‑Health stays green
-RUN mkdir -p /var/www/html/web/app/upgrade \
- && chown -R www-data:www-data /var/www/html/web/app
+RUN mkdir -p /var/www/html/web/app/upgrade
+
+# ── NEW: bake Hello Elementor theme into the image
+RUN curl -sSL https://downloads.wordpress.org/theme/hello-elementor.zip \
+      -o /tmp/hello.zip \
+ && unzip -q /tmp/hello.zip -d web/app/themes \
+ && rm /tmp/hello.zip
+
+# correct ownership for everything we created
+RUN chown -R www-data:www-data /var/www/html/web/app
 
 # (optional) COPY .env .env   # if you ever want to bake it in
 
