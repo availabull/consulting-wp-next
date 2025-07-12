@@ -35,4 +35,10 @@ WORKDIR /var/www/html
 COPY --from=composer /app ./
 COPY --from=composer /app/vendor ./vendor
 
+# ── NEW: pre‑create wp‑content/upgrade so Site‑Health stays green
+RUN mkdir -p /var/www/html/web/app/upgrade \
+ && chown -R www-data:www-data /var/www/html/web/app
+
 # (optional) COPY .env .env   # if you ever want to bake it in
+
+# keep Apache foreground (handled by base image entrypoint)
