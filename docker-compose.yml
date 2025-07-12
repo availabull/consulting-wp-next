@@ -1,41 +1,50 @@
-# docker‑compose.yml — production stack, Traefik + automatic HTTPS
+# docker‑compose.yml — local dev stack (Traefik + HTTPS + localhost aliases)
 version: '3.9'
 
 services:
-  # ─── MariaDB ────────────────────────────────────────────────────────
+  # ─── MariaDB ─────────────────────────────────────────────────────
   db:
     image: mariadb:11
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}   # ← comes from .env
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}   # local default
       MYSQL_DATABASE: wp
     volumes:
       - db_data:/var/lib/mysql
 
-  # ─── WordPress / Bedrock  →  https://wp.robertfisher.com ───────────
+  # ─── WordPress / Bedrock  →  http://wp.robertfisher.com OR http://localhost:8080/wp
   wordpress:
-    build: ./wordpress                   # CI builds again, local dev OK
+    build: ./wordpress
     restart: unless-stopped
     expose: ["80"]
     environment:
       DB_NAME:     wp
       DB_USER:     root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
       DB_HOST:     db
-      WP_ENV:      ${WP_ENV:-production}
-      WP_HOME:     https://wp.robertfisher.com
-      WP_SITEURL:  https://wp.robertfisher.com/wp
+      WP_ENV:      ${WP_ENV:-development}
+      # Dev fallback URLs
+      WP_HOME:     ${WP_HOME:-http://localhost:8080}
+      WP_SITEURL:  ${WP_SITEURL:-http://localhost:8080/wp}
     volumes:
       - uploads:/var/www/html/web/app/uploads
     labels:
       - traefik.enable=true
+
+      # ── production router (unchanged)
       - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
       - traefik.http.routers.wp.entrypoints=websecure
       - traefik.http.routers.wp.tls.certresolver=cf
       - traefik.http.services.wp.loadbalancer.server.port=80
+
+      # ── localhost router — only WP‑specific paths
+      - traefik.http.routers.wp-local.rule=Host(`localhost`) && ( PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`) )
+      - traefik.http.routers.wp-local.entrypoints=web
+      - traefik.http.routers.wp-local.priority=12        # outranks next-local
+
     depends_on: [db]
 
-  # ─── Next.js front‑end  →  https://robertfisher.com ───────────────
+  # ─── Next.js front‑end  →  http://robertfisher.com OR http://localhost:8080
   next:
     build:
       context: ./nextjs-site
@@ -47,32 +56,45 @@ services:
       NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     labels:
       - traefik.enable=true
+
+      # production router (unchanged)
       - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
       - traefik.http.routers.next.entrypoints=websecure
       - traefik.http.routers.next.tls.certresolver=cf
       - traefik.http.services.next.loadbalancer.server.port=3000
+
+      # localhost router — matches everything else
+      - traefik.http.routers.next-local.rule=Host(`localhost`)
+      - traefik.http.routers.next-local.entrypoints=web
+      - traefik.http.routers.next-local.priority=10        # lower than wp-local
+      - traefik.http.services.next.loadbalancer.server.port=3000
+
     depends_on: [wordpress]
 
-  # ─── Traefik v3 — reverse‑proxy + ACME DNS‑01 via Cloudflare ──────
+  # ─── Traefik v3 — reverse‑proxy for dev + ACME for prod ─────────
   traefik:
     image: traefik:3
     restart: unless-stopped
     command:
-      - "--log.level=DEBUG"                         # flip to INFO later
+      - "--log.level=DEBUG"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      # entrypoints
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      # ACME DNS‑01 (prod only)
       - "--certificatesresolvers.cf.acme.dnschallenge=true"
       - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
-      - "--certificatesresolvers.cf.acme.email=${LE_EMAIL}"
+      - "--certificatesresolvers.cf.acme.email=${LE_EMAIL:-local@example.com}"
       - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
     environment:
-      CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
-      LE_EMAIL: ${LE_EMAIL}
+      CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN:-dev}
+      LE_EMAIL: ${LE_EMAIL:-local@example.com}
     ports:
-      - "80:80"
+      - "80:80"        # prod+dev
+      - "8080:80"      # http://localhost:8080  ← easiest dev entry
       - "443:443"
+      - "8443:443"     # https://localhost:8443 (self‑signed)
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - le:/letsencrypt
