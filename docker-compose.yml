@@ -1,8 +1,7 @@
-# docker‑compose.yml — local dev stack (Traefik + HTTPS + localhost aliases)
+# docker‑compose.yml (local dev)
 version: '3.9'
 
 services:
-  # ─── MariaDB ────────────────────────────────────────────────────
   db:
     image: mariadb:11
     restart: unless-stopped
@@ -12,7 +11,6 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
-  # ─── WordPress / Bedrock ───────────────────────────────────────
   wordpress:
     build: ./wordpress
     restart: unless-stopped
@@ -29,48 +27,36 @@ services:
       - uploads:/var/www/html/web/app/uploads
     labels:
       - traefik.enable=true
-
-      # production router
       - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
       - traefik.http.routers.wp.entrypoints=websecure
       - traefik.http.routers.wp.tls.certresolver=cf
       - traefik.http.services.wp.loadbalancer.server.port=80
-
-      # localhost router — only WP paths
       - traefik.http.routers.wp-local.rule=Host(`localhost`) && ( PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`) )
       - traefik.http.routers.wp-local.entrypoints=web
       - traefik.http.routers.wp-local.priority=12
-
     depends_on: [ db ]
 
-  # ─── Next.js front‑end ─────────────────────────────────────────
   next:
     build:
       context: ./nextjs-site
       args:
-        NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
+        NEXT_PUBLIC_WPGRAPHQL_URL: https://wp.robertfisher.com/graphql
     restart: unless-stopped
     expose: ["3000"]
     environment:
-      NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
+      NEXT_PUBLIC_WPGRAPHQL_URL: https://wp.robertfisher.com/graphql
     labels:
       - traefik.enable=true
-
-      # production router
       - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
       - traefik.http.routers.next.entrypoints=websecure
       - traefik.http.routers.next.tls.certresolver=cf
       - traefik.http.services.next.loadbalancer.server.port=3000
-
-      # localhost router — catch‑all
       - traefik.http.routers.next-local.rule=Host(`localhost`)
       - traefik.http.routers.next-local.entrypoints=web
       - traefik.http.routers.next-local.priority=10
       - traefik.http.services.next.loadbalancer.server.port=3000
-
     depends_on: [ wordpress ]
 
-  # ─── Traefik v3 — reverse proxy ───────────────────────────────
   traefik:
     image: traefik:3
     restart: unless-stopped
