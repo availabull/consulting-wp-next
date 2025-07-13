@@ -2,13 +2,15 @@
   "name": "nextjs-site",
   "version": "0.1.0",
   "private": true,
+
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev":   "next dev --turbo",
     "build": "next build --no-lint",
     "start": "node .next/standalone/server.js",
-    "lint": "next lint",
-    "css": "tailwindcss -i ./src/app/globals.css -o ./src/app/tailwind.css --minify"
+    "lint":  "next lint",
+    "css":   "tailwindcss -i ./src/app/globals.css -o ./src/app/tailwind.css --minify"
   },
+
   "dependencies": {
     "@apollo/client": "^3.13.8",
     "@radix-ui/react-slot": "^1.2.3",
@@ -21,6 +23,7 @@
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.3.1"
   },
+
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/cli": "^4.1.11",
