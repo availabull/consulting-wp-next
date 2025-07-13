@@ -1,12 +1,19 @@
-import type { NextConfig } from "next";
+const path = require('node:path');
 
-/**
- * Build a stand‑alone bundle so the Docker image
- * can run with `node .next/standalone/server.js`
- */
-const nextConfig: NextConfig = {
-  output: "standalone",
-  // add additional Next.js options below if you need them
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Build a stand‑alone bundle so the Docker image
+  // can run with `node .next/standalone/server.js`
+  output: 'standalone',
+
+  // Leverage Next.js’ built‑in Tailwind v4 loader
+  experimental: { tailwindcss: true },
+
+  // Expose the "@/…" alias to both Webpack and Node
+  webpack(config) {
+    config.resolve.alias['@'] = path.resolve(__dirname, 'src');
+    return config;
+  }
 };
 
-export default nextConfig;
+module.exports = nextConfig;
