@@ -1,0 +1,17 @@
+{
+  "name": "consulting-wp-next",
+  "version": "0.1.0",
+  "private": true,
+
+  "workspaces": [
+    "nextjs-site"
+  ],
+
+  "scripts": {
+    "build": "pnpm --filter nextjs-site build"
+  },
+
+  "devDependencies": {
+    "@types/webpack": "^5.28.5"
+  }
+}
