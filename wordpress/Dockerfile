@@ -26,6 +26,12 @@ RUN apt-get update -qq \
  && curl -sSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
       -o /usr/local/bin/wp && chmod +x /usr/local/bin/wp
 
+# ─── ⭐ Allow .htaccess overrides for Bedrock ───────────────────────
+# This persists the manual fix you applied earlier
+RUN printf '<Directory /var/www/html/web>\n AllowOverride All\n</Directory>\n' \
+        > /etc/apache2/conf-available/allow-bedrock-htaccess.conf \
+ && a2enconf allow-bedrock-htaccess
+
 # ─── Bedrock source + vendor from build stage ──────────────────────
 WORKDIR /var/www/html
 COPY --from=composer /app ./

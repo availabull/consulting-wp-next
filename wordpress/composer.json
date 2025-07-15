@@ -29,10 +29,6 @@
     "forum": "https://discourse.roots.io/category/bedrock"
   },
   "repositories": {
-    "wp-graphql": {
-      "type": "vcs",
-      "url": "https://github.com/wp-graphql/wp-graphql.git"
-    },
     "0": {
       "type": "composer",
       "url": "https://wpackagist.org",
@@ -49,11 +45,10 @@
     "oscarotero/env": "^2.1",
     "roots/bedrock-autoloader": "^1.0",
     "roots/bedrock-disallow-indexing": "^2.0",
-    "roots/wordpress": "^6.8.",
-    "roots/wp-config": "^1.0.",
+    "roots/wordpress": "^6.8.2",
+    "roots/wp-config": "^1.0",
     "wpackagist-theme/twentytwentyfive": "^1.0",
-    "wpackagist-plugin/wp-graphql": "^1.0",
-    "wp-graphql/wp-graphql": "^1.14"
+    "wpackagist-plugin/wp-graphql": "^2.3.3"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
