@@ -2,19 +2,15 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
-/**
- * The `.woff2` files must live under
- *   nextjs-site/public/fonts/
- * so they are served at  /fonts/…  by Next.js.
- */
+/* ▲▲  two “..” hops:  src/app  →  src  →  project‑root/public  */
 const geistSans = localFont({
-  src: "../public/fonts/geist-sans.woff2",
+  src: "../../public/fonts/geist-sans.woff2",
   variable: "--font-geist-sans",
   display: "swap",
 });
 
 const geistMono = localFont({
-  src: "../public/fonts/geist-mono.woff2",
+  src: "../../public/fonts/geist-mono.woff2",
   variable: "--font-geist-mono",
   display: "swap",
 });
