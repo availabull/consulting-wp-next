@@ -1,0 +1,39 @@
+# Root Docker ignore
+
+# Never send VCS history
+.git
+.gitignore
+
+# Ignore entire WordPress backend
+wordpress/
+
+# Dependencies
+node_modules/
+.pnpm/
+nextjs-site/node_modules/
+nextjs-site/.pnpm/
+
+# Build output
+nextjs-site/.next/
+nextjs-site/out/
+nextjs-site/build/
+nextjs-site/coverage/
+
+# Docker volumes and runtime artefacts
+uploads/
+db_data/
+
+# Logs and temp files
+*.log
+*.tmp
+tmp/
+
+# Environment files
+.env
+.env.*
+wordpress/.env
+
+# IDE/editor folders
+.vscode/
+.idea/
+.DS_Store
