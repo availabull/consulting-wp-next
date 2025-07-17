@@ -12,10 +12,12 @@
 1. Copy `.env.example` → `.env` and `stack.env.example` → `stack.env`, then fill in the placeholder values.
 2. Install dependencies **before** running Docker:
 
-   ```bash
+```bash
    cd nextjs-site && pnpm install
 cd wordpress   && composer install
 ```
+
+3. After installing dependencies, run `pnpm lint` from `nextjs-site` and `composer lint` from `wordpress`. Both must pass before opening a pull request.
 
 | Goal | One‑liner | Opens in browser |
 |------|-----------|------------------|
