@@ -9,7 +9,7 @@
 
 ## 1 Local workflow
 
-1. Copy `.env.example` → `.env` and fill in the placeholder values.
+1. Copy `.env.example` → `.env` and `stack.env.example` → `stack.env`, then fill in the placeholder values.
 2. Install dependencies **before** running Docker:
 
    ```bash
