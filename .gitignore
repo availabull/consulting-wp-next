@@ -24,6 +24,7 @@ tmp/
 .env
 .env.*
 wordpress/.env        # if someone creates a runtime .env inside WP
+stack.env
 
 # ────────────────────────── Version‑control artefacts ───────────────
 .git
