@@ -4,10 +4,11 @@ import { gql } from "@apollo/client";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default async function WPPage({ params }: PageProps) {
+  const { slug } = await params;
   try {
     const { data } = await client.query({
       query: gql`
@@ -18,7 +19,7 @@ export default async function WPPage({ params }: PageProps) {
           }
         }
       `,
-      variables: { slug: params.slug },
+      variables: { slug },
       fetchPolicy: "no-cache",
     });
 
