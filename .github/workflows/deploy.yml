@@ -10,8 +10,27 @@ permissions:
   packages: write
 
 jobs:
+  lint-nextjs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run pnpm lint
+        working-directory: nextjs-site
+        run: |
+          corepack enable pnpm
+          pnpm lint
+
+  lint-wordpress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run composer lint
+        working-directory: wordpress
+        run: composer lint
+
   deploy:
     runs-on: ubuntu-latest
+    needs: [lint-nextjs, lint-wordpress]
     steps:
     - uses: actions/checkout@v4
 
