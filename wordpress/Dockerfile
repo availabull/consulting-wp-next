@@ -51,4 +51,4 @@ RUN rm -rf /var/www/html/web/wp/wp-content/themes/twenty* \
            /var/www/html/web/app/themes/twenty*
 
 # ─── correct ownership of everything we touched ────────────────────
-RUN chown -R www-data:www-data /var/www/html/web/app
+RUN chown -R www-data:www-data /var/www/html/web
