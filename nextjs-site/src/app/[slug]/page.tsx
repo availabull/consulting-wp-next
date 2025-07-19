@@ -1,15 +1,17 @@
 import { gql } from "@apollo/client";
 import client from "@/lib/apollo";
 
-export const dynamic = "force-dynamic";           // disable ISR in dev
+export const dynamic = "force-dynamic";   // disables ISR in dev
 
-// App‑router passes a *plain* params object → NO Promise
+/*  When generateStaticParams is async, Next’s code‑gen makes
+    PageProps = { params: Promise<{ slug:string }> }              */
 export default async function WPPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = params;
+  /* runtime still receives a plain object → await is cheap/no‑op */
+  const { slug } = await params;
 
   try {
     const { data } = await client.query({
@@ -25,7 +27,6 @@ export default async function WPPage({
       fetchPolicy: "no-cache",
     });
 
-    /* —————————————————— empty result —————————————————— */
     if (!data?.page) {
       return (
         <main className="flex min-h-screen items-center justify-center">
@@ -34,7 +35,6 @@ export default async function WPPage({
       );
     }
 
-    /* —————————————————— happy path ——————————————————— */
     return (
       <main className="prose mx-auto max-w-3xl px-6 py-12">
         <h1>{data.page.title}</h1>
@@ -42,7 +42,6 @@ export default async function WPPage({
       </main>
     );
   } catch (err) {
-    /* —————————————————— network / GraphQL error ————————— */
     console.error("GraphQL error:", err);
     return (
       <main className="flex min-h-screen items-center justify-center">
