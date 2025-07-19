@@ -7,10 +7,10 @@ on:
 
 permissions:
   contents: read
-  packages: write          # needed for GHCR push/login
+  packages: write           # needed for GHCR push/login
 
 jobs:
-  # ────────────────────────── LINT JOBS ──────────────────────────
+# ────────────────────────── LINT JOBS ──────────────────────────
   lint-nextjs:
     runs-on: ubuntu-latest
     steps:
@@ -41,17 +41,17 @@ jobs:
         working-directory: wordpress
         run: composer lint
 
-  # ─────────────────────────── DEPLOY ────────────────────────────
+# ─────────────────────────── DEPLOY ────────────────────────────
   deploy:
     runs-on: ubuntu-latest
-    needs: [lint-nextjs, lint-wordpress]
+    needs: [ lint-nextjs, lint-wordpress ]
 
     steps:
     - uses: actions/checkout@v4
 
     # ---------- 1. Build images & push to GHCR ----------
     - name: Log in to GHCR
-      uses: docker/login-action@v3         # ← safer wrapper
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -76,6 +76,8 @@ jobs:
         host:     ${{ secrets.DO_HOST }}
         username: root
         key:      ${{ secrets.DO_SSH_KEY }}
+        timeout: 1200          # 20 min total
+        command_timeout: 1200  # 20 min for last cmd
         script: |
           set -eu
           mkdir -p /srv/consultancy
@@ -87,12 +89,10 @@ jobs:
               'docker image prune -af --filter "until=168h"' \
               > /etc/cron.weekly/docker-prune && chmod +x /etc/cron.weekly/docker-prune
           fi
-
           docker image prune -af || true    # non‑fatal
 
           # ---------------- docker‑compose.yml ----------------
           cat > docker-compose.yml <<'COMPOSE'
-          version: '3.9'
           services:
             db:
               image: mariadb:11
@@ -185,23 +185,24 @@ jobs:
           STACK
           perl -pi -e 's/\$/\$\$/g' stack.env   # escape $ for env‑file
 
-          # ---- helper script (idempotent installer) ----
+          # ---- helper script ---------------------------------------------------
           mkdir -p /srv/consultancy/bin
           cat > /srv/consultancy/bin/wp-bootstrap.sh <<'BOOT'
           #!/usr/bin/env bash
           set -eu
 
-          # --- wait until MariaDB is ready --------------------------------------
+          # --- wait until MariaDB answers --------------------------------------
           echo -n "Waiting for MariaDB … "
-          # shellcheck disable=SC1091
-          [ -f /srv/consultancy/.env ] && source /srv/consultancy/.env
-          until docker compose exec db \
-              mysqladmin ping -h127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" \
-              >/dev/null 2>&1; do
-            printf '.'
-            sleep 2
+          source /srv/consultancy/.env
+          for i in {1..30}; do  # max 60 s
+            if docker compose exec db \
+                 mysqladmin --silent ping -h127.0.0.1 \
+                            -uroot -p"$MYSQL_ROOT_PASSWORD" >/dev/null 2>&1; then
+              echo "ok"; break
+            fi
+            printf '.'; sleep 2
+            [ "$i" -eq 30 ] && { echo " timed out"; exit 1; }
           done
-          echo " ok"
 
           # --- normal installer -------------------------------------------------
           docker compose exec wordpress bash -c '
@@ -233,6 +234,8 @@ jobs:
         host:     ${{ secrets.DO_HOST }}
         username: root
         key:      ${{ secrets.DO_SSH_KEY }}
+        timeout: 1200
+        command_timeout: 1200
         script: |
           set -eu
           cd /srv/consultancy
