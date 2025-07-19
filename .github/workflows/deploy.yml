@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  packages: write
+  packages: write           # ← needed for GHCR push/login
 
 jobs:
   # ────────────────────────── LINT JOBS ──────────────────────────
@@ -51,8 +51,11 @@ jobs:
 
     # ---------- 1. Build images & push to GHCR ----------
     - name: Log in to GHCR
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | \
-           docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      uses: docker/login-action@v3          # ← NEW (no more pipe)
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build & push WordPress
       run: |
@@ -180,10 +183,9 @@ jobs:
           LOGGED_IN_SALT=${{ secrets.LOGGED_IN_SALT }}
           NONCE_SALT=${{ secrets.NONCE_SALT }}
           STACK
-          # escape $ for env‑file
-          perl -pi -e 's/\$/\$\$/g' stack.env
+          perl -pi -e 's/\$/\$\$/g' stack.env   # escape $ for env‑file
 
-          # ---------------- helper script  ----------------
+          # ---- helper script (idempotent installer) ----
           mkdir -p /srv/consultancy/bin
           cat > /srv/consultancy/bin/wp-bootstrap.sh <<'BOOT'
           #!/usr/bin/env bash
@@ -204,11 +206,9 @@ jobs:
           BOOT
           chmod +x /srv/consultancy/bin/wp-bootstrap.sh
 
-          # ---------------- pull & start stack --------------
+          # ---- pull, start, bootstrap ----
           docker compose pull
           docker compose up -d --remove-orphans
-          
-          # ---------------- first‑time install --------------
           /srv/consultancy/bin/wp-bootstrap.sh
 
     # ---------- 3. One‑shot WP‑CLI maintenance ----------
