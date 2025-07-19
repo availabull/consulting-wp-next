@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Your base production configuration goes in this file. Environment‑specific
  * overrides go in their respective config/environments/{{WP_ENV}}.php file.
@@ -8,6 +9,7 @@
  */
 
 use Roots\WPConfig\Config;
+
 use function Env\env;
 
 // Tell vlucas/php‑dotenv to treat ENV as arrays, convert types, and strip quotes
@@ -57,7 +59,7 @@ if (!env('WP_ENVIRONMENT_TYPE') && in_array(WP_ENV, ['production', 'staging', 'd
     Config::define('WP_ENVIRONMENT_TYPE', WP_ENV);
 }
 
-Config::define('WP_HOME',    env('WP_HOME'));
+Config::define('WP_HOME', env('WP_HOME'));
 Config::define('WP_SITEURL', env('WP_SITEURL'));
 
 /**
@@ -65,9 +67,9 @@ Config::define('WP_SITEURL', env('WP_SITEURL'));
  * Custom content directory (Bedrock convention: /web/app)
  * -----------------------------------------------------------------
  */
-Config::define('CONTENT_DIR',      '/app');
-Config::define('WP_CONTENT_DIR',   $webroot_dir . Config::get('CONTENT_DIR'));
-Config::define('WP_CONTENT_URL',   Config::get('WP_HOME') . Config::get('CONTENT_DIR'));
+Config::define('CONTENT_DIR', '/app');
+Config::define('WP_CONTENT_DIR', $webroot_dir . Config::get('CONTENT_DIR'));
+Config::define('WP_CONTENT_URL', Config::get('WP_HOME') . Config::get('CONTENT_DIR'));
 
 /**
  * -----------------------------------------------------------------
@@ -88,10 +90,10 @@ $table_prefix = env('DB_PREFIX') ?: 'wp_';
 
 if (env('DATABASE_URL')) {
     $dsn = (object) parse_url(env('DATABASE_URL'));
-    Config::define('DB_NAME',     substr($dsn->path, 1));
-    Config::define('DB_USER',     $dsn->user);
+    Config::define('DB_NAME', substr($dsn->path, 1));
+    Config::define('DB_USER', $dsn->user);
     Config::define('DB_PASSWORD', $dsn->pass ?? null);
-    Config::define('DB_HOST',     isset($dsn->port) ? "{$dsn->host}:{$dsn->port}" : $dsn->host);
+    Config::define('DB_HOST', isset($dsn->port) ? "{$dsn->host}:{$dsn->port}" : $dsn->host);
 }
 
 /**
@@ -99,22 +101,22 @@ if (env('DATABASE_URL')) {
  * Authentication keys & salts
  * -----------------------------------------------------------------
  */
-Config::define('AUTH_KEY',          env('AUTH_KEY'));
-Config::define('SECURE_AUTH_KEY',   env('SECURE_AUTH_KEY'));
-Config::define('LOGGED_IN_KEY',     env('LOGGED_IN_KEY'));
-Config::define('NONCE_KEY',         env('NONCE_KEY'));
-Config::define('AUTH_SALT',         env('AUTH_SALT'));
-Config::define('SECURE_AUTH_SALT',  env('SECURE_AUTH_SALT'));
-Config::define('LOGGED_IN_SALT',    env('LOGGED_IN_SALT'));
-Config::define('NONCE_SALT',        env('NONCE_SALT'));
+Config::define('AUTH_KEY', env('AUTH_KEY'));
+Config::define('SECURE_AUTH_KEY', env('SECURE_AUTH_KEY'));
+Config::define('LOGGED_IN_KEY', env('LOGGED_IN_KEY'));
+Config::define('NONCE_KEY', env('NONCE_KEY'));
+Config::define('AUTH_SALT', env('AUTH_SALT'));
+Config::define('SECURE_AUTH_SALT', env('SECURE_AUTH_SALT'));
+Config::define('LOGGED_IN_SALT', env('LOGGED_IN_SALT'));
+Config::define('NONCE_SALT', env('NONCE_SALT'));
 
 /**
  * -----------------------------------------------------------------
  * Custom settings
  * -----------------------------------------------------------------
  */
-Config::define('AUTOMATIC_UPDATER_DISABLED', true);                     // core updates come via Docker
-Config::define('DISABLE_WP_CRON',         env('DISABLE_WP_CRON') ?: false);
+Config::define('AUTOMATIC_UPDATER_DISABLED', true); // core updates come via Docker
+Config::define('DISABLE_WP_CRON', env('DISABLE_WP_CRON') ?: false);
 
 /** ───── FILESYSTEM ───────────────────────────────────────────────
  *  Allow WordPress & WP‑CLI to write directly inside the container
@@ -127,13 +129,13 @@ Config::define('WP_DEFAULT_THEME', 'hello-elementor');
 /**
  * Security‑hardening helpers
  */
-Config::define('DISALLOW_FILE_EDIT',  true);   // no Appearance → Editor
-Config::define('DISALLOW_FILE_MODS',  true);   // themes/plugins only via CI
+Config::define('DISALLOW_FILE_EDIT', true);   // no Appearance → Editor
+Config::define('DISALLOW_FILE_MODS', true);   // themes/plugins only via CI
 
 /**
  * Performance / housekeeping
  */
-Config::define('WP_POST_REVISIONS',   env('WP_POST_REVISIONS') ?? true);
+Config::define('WP_POST_REVISIONS', env('WP_POST_REVISIONS') ?? true);
 Config::define('CONCATENATE_SCRIPTS', false);
 
 /**
@@ -142,8 +144,8 @@ Config::define('CONCATENATE_SCRIPTS', false);
  * -----------------------------------------------------------------
  */
 Config::define('WP_DEBUG_DISPLAY', false);
-Config::define('WP_DEBUG_LOG',     false);
-Config::define('SCRIPT_DEBUG',     false);
+Config::define('WP_DEBUG_LOG', false);
+Config::define('SCRIPT_DEBUG', false);
 ini_set('display_errors', '0');
 
 /**

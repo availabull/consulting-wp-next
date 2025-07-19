@@ -1,4 +1,5 @@
 <?php
+
 /**
  * mu-plugins/ignore-readonly-core.php
  * Silences Site Health alerts about read‑only core files in Docker.
