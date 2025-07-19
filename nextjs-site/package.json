@@ -6,6 +6,7 @@
     "dev": "next dev --turbo",
     "build": "next build --no-lint",
     "start": "node .next/standalone/server.js",
+    "prelint": "node ./scripts/check-next.js",
     "lint": "next lint",
     "css": "tailwindcss -i ./src/app/globals.css -o ./src/app/tailwind.css --minify"
   },

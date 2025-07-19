@@ -17,7 +17,7 @@
 cd wordpress   && composer install
 ```
 
-3. After installing dependencies, run `pnpm lint` from `nextjs-site` and `composer lint` from `wordpress`. Both must pass before opening a pull request.
+3. After installing dependencies, run `pnpm lint` from `nextjs-site` and `composer lint` from `wordpress`. Both must pass before opening a pull request. If `pnpm lint` complains that `next` is missing, simply run `pnpm install` in `nextjs-site/` first.
 
 | Goal | One‑liner | Opens in browser |
 |------|-----------|------------------|
