@@ -93,3 +93,8 @@ chmod 600 /var/lib/docker/volumes/consulting-wp-next_le/_data/acme.json
 * `docker compose logs traefik`
 * check permissions of `acme.json` (should be `600`)
 * ensure required environment variables (`LE_EMAIL`, `CLOUDFLARE_DNS_API_TOKEN`, `MYSQL_ROOT_PASSWORD`) are set
+
+## 3 Site info
+
+Run `node ./scripts/site-info.js` to print a JSON summary of the stack. This shows
+current URLs, versions and the Traefik routing configuration.
