@@ -1,13 +1,12 @@
-# wordpress/Dockerfile
 # ───────────────────────── 1) Build stage ──────────────────────────
 FROM composer:2.7 AS composer
 WORKDIR /app
 
-# ① install prod‑only vendors (leverages layer cache)
+# ① Prod‑only vendors (leverages layer cache)
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-progress
 
-# ② copy Bedrock source
+# ② Bedrock source
 COPY . .
 
 # ───────────────────────── 2) Runtime stage ────────────────────────
@@ -26,8 +25,7 @@ RUN apt-get update -qq \
  && curl -sSL https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
       -o /usr/local/bin/wp && chmod +x /usr/local/bin/wp
 
-# ─── ⭐ Allow .htaccess overrides for Bedrock ───────────────────────
-# This persists the manual fix you applied earlier
+# ─── ⭐ Allow .htaccess overrides for Bedrock ───────────────────────
 RUN printf '<Directory /var/www/html/web>\n AllowOverride All\n</Directory>\n' \
         > /etc/apache2/conf-available/allow-bedrock-htaccess.conf \
  && a2enconf allow-bedrock-htaccess
@@ -36,6 +34,9 @@ RUN printf '<Directory /var/www/html/web>\n AllowOverride All\n</Directory>\n' \
 WORKDIR /var/www/html
 COPY --from=composer /app ./
 COPY --from=composer /app/vendor ./vendor
+
+# ⭐ helper mu‑plugin so WP‑CLI can always write .htaccess
+COPY web/app/mu-plugins/wp-cli-htaccess-fix.php web/app/mu-plugins/
 
 # ─── keep Site‑Health green → pre‑create wp‑content/upgrade ────────
 RUN mkdir -p /var/www/html/web/app/upgrade
