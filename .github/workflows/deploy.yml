@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  packages: write           # ← needed for GHCR push/login
+  packages: write          # needed for GHCR push/login
 
 jobs:
   # ────────────────────────── LINT JOBS ──────────────────────────
@@ -44,14 +44,14 @@ jobs:
   # ─────────────────────────── DEPLOY ────────────────────────────
   deploy:
     runs-on: ubuntu-latest
-    needs: [ lint-nextjs, lint-wordpress ]
+    needs: [lint-nextjs, lint-wordpress]
 
     steps:
     - uses: actions/checkout@v4
 
     # ---------- 1. Build images & push to GHCR ----------
     - name: Log in to GHCR
-      uses: docker/login-action@v3          # ← NEW (no more pipe)
+      uses: docker/login-action@v3         # ← safer wrapper
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -69,7 +69,7 @@ jobs:
           -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
         docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
-    # ---------- 2. Write docker‑compose.yml, .env, stack.env ----------
+    # ---------- 2. Provision droplet & write files ----------
     - name: Deploy on droplet
       uses: appleboy/ssh-action@v1
       with:
@@ -190,6 +190,20 @@ jobs:
           cat > /srv/consultancy/bin/wp-bootstrap.sh <<'BOOT'
           #!/usr/bin/env bash
           set -eu
+
+          # --- wait until MariaDB is ready --------------------------------------
+          echo -n "Waiting for MariaDB … "
+          # shellcheck disable=SC1091
+          [ -f /srv/consultancy/.env ] && source /srv/consultancy/.env
+          until docker compose exec db \
+              mysqladmin ping -h127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" \
+              >/dev/null 2>&1; do
+            printf '.'
+            sleep 2
+          done
+          echo " ok"
+
+          # --- normal installer -------------------------------------------------
           docker compose exec wordpress bash -c '
             cd /var/www/html/web &&
             wp core is-installed --allow-root || wp core install \
