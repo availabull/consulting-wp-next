@@ -6,8 +6,7 @@ on:
 
 permissions:
   contents: read
-  packages: write          # push to GHCR
-
+  packages: write           # allow pushing to GHCR
 jobs:
 # ────────────────────────── LINT JOBS ──────────────────────────
   lint-nextjs:
@@ -75,8 +74,8 @@ jobs:
         host:     ${{ secrets.DO_HOST }}
         username: root
         key:      ${{ secrets.DO_SSH_KEY }}
-        timeout: 1200          # 20 min
-        command_timeout: 1200
+        timeout: "1200s"          # ← duration must include unit
+        command_timeout: "1200s"
         script: |
           set -eu
           mkdir -p /srv/consultancy
@@ -183,7 +182,7 @@ jobs:
           LOGGED_IN_SALT=${{ secrets.LOGGED_IN_SALT }}
           NONCE_SALT=${{ secrets.NONCE_SALT }}
           STACK
-          perl -pi -e 's/\$/\$\$/g' stack.env
+          perl -pi -e 's/\$/\$\$/g' stack.env   # escape $ for env‑file
 
           # -------- helper script --------
           mkdir -p /srv/consultancy/bin
@@ -231,8 +230,8 @@ jobs:
         host:     ${{ secrets.DO_HOST }}
         username: root
         key:      ${{ secrets.DO_SSH_KEY }}
-        timeout: 1200
-        command_timeout: 1200
+        timeout: "1200s"
+        command_timeout: "1200s"
         script: |
           set -eu
           cd /srv/consultancy
