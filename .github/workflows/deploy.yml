@@ -102,7 +102,7 @@ jobs:
                 volumes: [ "db_data:/var/lib/mysql" ]
                 healthcheck:
                   test: ["CMD-SHELL",
-                         "mysqladmin ping -h127.0.0.1 -uroot -p${MYSQL_ROOT_PASSWORD} --silent"]
+                         "mysqladmin ping -h127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD --silent"]
                   interval: 5s
                   timeout: 3s
                   retries: 30
