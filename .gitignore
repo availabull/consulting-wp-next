@@ -29,3 +29,4 @@ stack.env
 # ────────────────────────── Version‑control artefacts ───────────────
 .git
 .gitignore
+!bin/wp-bootstrap.sh

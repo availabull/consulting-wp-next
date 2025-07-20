@@ -1,4 +1,4 @@
-# docker‑compose.yml  ── local dev & staging
+# docker‑compose.yml ─ local dev & staging
 version: "3.9"
 
 services:
@@ -11,13 +11,19 @@ services:
       MYSQL_DATABASE: wp
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:                      # ensure MariaDB is ready
+      test: ["CMD-SHELL",
+             "mysqladmin ping -h127.0.0.1 -uroot -p${MYSQL_ROOT_PASSWORD:-secret} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
 
   # ─────────────────────────────── WordPress ───────────────────────────────
   wordpress:
-    build: ./wordpress                    # custom Dockerfile (GraphQL baked in)
+    build: ./wordpress
     restart: unless-stopped
-    expose:
-      - "80"                              # Traefik sees the container on port 80
+    expose: ["80"]
     environment:
       DB_NAME:     wp
       DB_USER:     root
@@ -30,45 +36,41 @@ services:
       - uploads:/var/www/html/web/app/uploads
     labels:
       - traefik.enable=true
-      # ── Production mapping (Cloudflare certs):
       - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
       - traefik.http.routers.wp.entrypoints=websecure
       - traefik.http.routers.wp.tls.certresolver=cf
       - traefik.http.services.wp.loadbalancer.server.port=80
-      # ── Local shortcuts (no TLS):
       - traefik.http.routers.wp-local.rule=Host(`localhost`) && ( PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`) )
       - traefik.http.routers.wp-local.entrypoints=web
       - traefik.http.routers.wp-local.priority=12
-    depends_on:
-      - db
+    depends_on:                       # wait for healthy database
+      db:
+        condition: service_healthy
 
   # ──────────────────────────────── Next.js ────────────────────────────────
   next:
     build:
       context: ./nextjs-site
-      args:                                    # ← build‑time injection
+      args:
         NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     restart: unless-stopped
-    expose:
-      - "3000"                                # internal port (Traefik & other containers)
-    ports:                                     # ← OPTIONAL host mapping
-      - "3000:3000"                            # comment‑out for CI / prod if not wanted
-    environment:                              # ← runtime injection
+    expose: ["3000"]
+    ports: ["3000:3000"]              # comment‑out for CI / prod if not wanted
+    environment:
       NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     labels:
       - traefik.enable=true
-      # ── Production mapping (TLS via Traefik):
       - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
       - traefik.http.routers.next.entrypoints=websecure
       - traefik.http.routers.next.tls.certresolver=cf
       - traefik.http.services.next.loadbalancer.server.port=3000
-      # ── Local shortcut (plain HTTP on port 80 handled by Traefik):
       - traefik.http.routers.next-local.rule=Host(`localhost`)
       - traefik.http.routers.next-local.entrypoints=web
       - traefik.http.routers.next-local.priority=10
       - traefik.http.services.next.loadbalancer.server.port=3000
     depends_on:
-      - wordpress
+      wordpress:
+        condition: service_started    # unchanged semantics
 
   # ──────────────────────────────── Traefik ────────────────────────────────
   traefik:
@@ -88,10 +90,10 @@ services:
       CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN:-dev}
       LE_EMAIL: ${LE_EMAIL:-local@example.com}
     ports:
-      - "80:80"      # Traefik dashboard + local routes
-      - "8080:80"    # Extra host port → WordPress admin on :8080
-      - "443:443"    # HTTPS for production
-      - "8443:443"   # Optional secondary HTTPS
+      - "80:80"
+      - "8080:80"
+      - "443:443"
+      - "8443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - le:/letsencrypt
