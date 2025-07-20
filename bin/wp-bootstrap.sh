@@ -1,17 +1,15 @@
 set -eu
+
 docker compose exec wordpress bash -c '
-
-
- cd /var/www/html/web
-wp core is-installed --allow-root || wp core install \
-       --url=http://localhost:8080 \
-       --title="Fresh Site" \
-       --admin_user=admin \
-       --admin_password=change-me \
-       --admin_email=robert@robertfisher.com \
-       --skip-email --allow-root
-
-  wp option update permalink_structure "/%postname%/" --allow-root
-  wp plugin activate wp-graphql --allow-root
+  cd /var/www/html/web &&
+  wp core is-installed --allow-root || wp core install \
+      --url=https://wp.robertfisher.com \
+      --title="Production Site" \
+      --admin_user=${WP_ADMIN_USER:-admin} \
+      --admin_password=${WP_ADMIN_PASS:-changeme} \
+      --admin_email=${WP_ADMIN_EMAIL:-you@example.com} \
+      --skip-email --allow-root &&
+  wp option update permalink_structure "/%postname%/" --allow-root &&
+  wp plugin activate wp-graphql --allow-root &&
   wp rewrite flush --hard --allow-root
 '
