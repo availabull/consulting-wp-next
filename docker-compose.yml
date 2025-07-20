@@ -1,8 +1,7 @@
-# docker‑compose.yml ─ local dev & staging
+# docker‑compose.yml  ── local dev & staging
 version: "3.9"
 
 services:
-  # ──────────────────────────────── MariaDB ────────────────────────────────
   db:
     image: mariadb:11
     restart: unless-stopped
@@ -11,15 +10,15 @@ services:
       MYSQL_DATABASE: wp
     volumes:
       - db_data:/var/lib/mysql
-    healthcheck:                      # ensure MariaDB is ready
-      test: ["CMD-SHELL",
-             "mysqladmin ping -h127.0.0.1 -uroot -p${MYSQL_ROOT_PASSWORD:-secret} --silent"]
+
+    # ----- OFFICIAL HEALTH‑CHECK -------------------------------
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
       interval: 5s
       timeout: 5s
-      start_period: 30s               # more time for first initialisation
-      retries: 60                     # ≈ 5 min max
+      start_period: 30s   # give InnoDB a chance to initialise
+      retries: 60         # ≈ 5 min max
 
-  # ─────────────────────────────── WordPress ───────────────────────────────
   wordpress:
     build: ./wordpress
     restart: unless-stopped
@@ -43,11 +42,10 @@ services:
       - traefik.http.routers.wp-local.rule=Host(`localhost`) && ( PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`) )
       - traefik.http.routers.wp-local.entrypoints=web
       - traefik.http.routers.wp-local.priority=12
-    depends_on:                       # wait for healthy database
+    depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy       # now works reliably
 
-  # ──────────────────────────────── Next.js ────────────────────────────────
   next:
     build:
       context: ./nextjs-site
@@ -55,7 +53,7 @@ services:
         NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     restart: unless-stopped
     expose: ["3000"]
-    ports: ["3000:3000"]              # comment‑out for CI / prod if not wanted
+    ports: ["3000:3000"]
     environment:
       NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     labels:
@@ -70,9 +68,8 @@ services:
       - traefik.http.services.next.loadbalancer.server.port=3000
     depends_on:
       wordpress:
-        condition: service_started    # unchanged semantics
+        condition: service_started
 
-  # ──────────────────────────────── Traefik ────────────────────────────────
   traefik:
     image: traefik:3
     restart: unless-stopped
@@ -98,7 +95,6 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - le:/letsencrypt
 
-# ──────────────────────────────── Volumes ────────────────────────────────
 volumes:
   db_data:
   uploads:
