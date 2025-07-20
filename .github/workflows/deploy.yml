@@ -78,7 +78,7 @@ jobs:
           username:       root
           key:            ${{ secrets.DO_SSH_KEY }}
           timeout:        "1200s"   # 20 min
-          command_timeout:"1200s"
+          command_timeout: "1200s"
           script: |
             set -eu
             mkdir -p /srv/consultancy
