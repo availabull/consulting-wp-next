@@ -38,6 +38,8 @@ docker compose up -d            # fresh DB, run installer
 * `https://localhost:8080/wp/wp-admin/install.php` shows **“Welcome to WordPress – Site Title / Username / Password”**
 * After setup → activate **WP GraphQL** → save **Permalinks / Post name**
 * `http://localhost:8080/graphql` returns `{"errors":[{"message":"Must provide query string"}]}`
+  (no redirect to `/graphql/`; if you see a 301, flush permalinks and verify
+  `web/app/mu-plugins/disable-graphql-canonical.php` is present)
 * `http://localhost:3100` renders the Next.js front‑end (or use Turbopack on :3000).
 
 ---
