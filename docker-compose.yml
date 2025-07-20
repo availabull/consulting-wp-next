@@ -11,13 +11,16 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
-    # ----- OFFICIAL HEALTH‑CHECK -------------------------------
+    # ----- OFFICIAL HEALTH‑CHECK ---------------------------------
+    # Uses the script bundled in mariadb:11 images.  It waits for
+    # the TCP socket to accept connections *and* for InnoDB to be
+    # fully initialised before reporting “healthy”.
     healthcheck:
-      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
-      interval: 5s
-      timeout: 5s
-      start_period: 30s   # give InnoDB a chance to initialise
-      retries: 60         # ≈ 5 min max
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s      # run every 10 seconds
+      timeout: 5s        # fail if the script itself hangs >5 s
+      start_period: 30s  # give MySQL half a minute to boot
+      retries: 6         # → up to 1 minute total before unhealthy
 
   wordpress:
     build: ./wordpress
@@ -44,7 +47,7 @@ services:
       - traefik.http.routers.wp-local.priority=12
     depends_on:
       db:
-        condition: service_healthy       # now works reliably
+        condition: service_healthy   # now driven by the official check
 
   next:
     build:
