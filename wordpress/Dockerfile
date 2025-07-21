@@ -2,18 +2,22 @@
 FROM composer:2.7 AS composer
 WORKDIR /app
 
+# ─── Composer vendors (prod‑only) ───────────────────────────────────
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-progress
+
+# ─── Bedrock source into the build context ──────────────────────────
 COPY . .
 
-# ───────── 2) Runtime stage ────────────────────────────────────────
+# ───────── 2) Runtime stage ─────────────────────────────────────────
 FROM wordpress:php8.3-apache
 
 # ─── Apache document‑root → /web ───────────────────────────────────
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/web
-RUN sed -ri 's!/var/www/html!/var/www/html/web!g' /etc/apache2/sites-available/000-default.conf
+RUN sed -ri 's!/var/www/html!/var/www/html/web!g' \
+      /etc/apache2/sites-available/000-default.conf
 
-# ─── PHP extensions & helpers───────────────────────────────────────
+# ─── PHP extensions & helpers ──────────────────────────────────────
 RUN docker-php-ext-install pdo_mysql
 RUN apt-get update -qq \
  && apt-get install -y --no-install-recommends mariadb-client unzip curl \
@@ -45,13 +49,15 @@ RUN curl -sSL https://downloads.wordpress.org/theme/hello-elementor.zip \
  && rm /tmp/hello.zip
 
 # ─── bake WP GraphQL plugin (latest stable) ────────────────────────
-RUN curl -sSL https://downloads.wordpress.org/plugin/wp-graphql.latest-stable.zip \
-      -o /tmp/wp-graphql.zip \
- && unzip -q /tmp/wp-graphql.zip -d web/app/plugins \
- && rm /tmp/wp-graphql.zip
+RUN rm -rf web/app/plugins/wp-graphql && \
+    curl -sSL https://downloads.wordpress.org/plugin/wp-graphql.latest-stable.zip \
+      -o /tmp/wp-graphql.zip && \
+    unzip -qo /tmp/wp-graphql.zip -d web/app/plugins && \
+    rm /tmp/wp-graphql.zip
 
 # ─── remove bundled Twenty* themes (core + Bedrock copy) ───────────
-RUN rm -rf web/wp/wp-content/themes/twenty*  web/app/themes/twenty*
+RUN rm -rf web/wp/wp-content/themes/twenty* \
+           web/app/themes/twenty*
 
 # ─── writable .htaccess so rewrites persist ────────────────────────
 RUN touch web/.htaccess && chown www-data:www-data web/.htaccess
