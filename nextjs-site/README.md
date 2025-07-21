@@ -16,6 +16,8 @@ cd <repo>
 
 # minimal env for DB
 echo "MYSQL_ROOT_PASSWORD=secret" > .env
+# Optionally set the WordPress URL
+echo "WP_HOME=http://localhost:8080" >> .env
 
 docker compose up --build -d          # builds WP + Next
 open http://localhost:8080/wp/wp-admin/   # install WordPress

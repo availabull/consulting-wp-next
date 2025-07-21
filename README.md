@@ -9,7 +9,7 @@
 
 ## 1 Local workflow
 
-1. Copy `.env.example` → `.env` and `stack.env.example` → `stack.env`, then fill in the placeholder values.
+1. Copy `.env.example` → `.env` and `stack.env.example` → `stack.env`, then fill in the placeholder values. In your new `.env` file, set `WP_HOME` to your WordPress URL (defaults to `http://localhost:8080`).
 2. Copy `nextjs-site/.env.example` → `nextjs-site/.env.local` before running `pnpm dev`.
 3. Install dependencies **before** running Docker:
 
