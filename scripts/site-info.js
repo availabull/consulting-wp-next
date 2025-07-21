@@ -19,7 +19,7 @@ const wpGraphql = getComposerPackage(composerLock, 'wpackagist-plugin/wp-graphql
 
 const nextPkg = readJSON(path.join(__dirname, '..', 'nextjs-site', 'package.json'));
 
-// Determine the base domain from environment or WP_HOME, fallback to default
+// Determine the base domain from SITE_DOMAIN or WP_HOME, fallback to example.com
 const wpHome = process.env.WP_HOME;
 let baseDomain = process.env.SITE_DOMAIN;
 if (!baseDomain && wpHome) {
@@ -32,7 +32,7 @@ if (!baseDomain && wpHome) {
   }
 }
 if (!baseDomain) {
-  baseDomain = 'robertfisher.com';
+  baseDomain = process.env.SITE_DOMAIN || 'example.com';
 }
 
 // Build info object
