@@ -188,7 +188,7 @@ services:
 volumes:
   db_data:
   uploads:
-  le:
+  le: {}
 COMPOSE
 
             # ─── .env & stack.env ────────────────────────────────────────
