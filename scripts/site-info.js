@@ -56,7 +56,7 @@ const info = {
       'wp-graphql': wpGraphql ? wpGraphql.version : null
     },
     nextjs: nextPkg.dependencies.next,
-    traefik: '3',
+    traefik: '2.11',
     mariadb: '11'
   },
   routes: {

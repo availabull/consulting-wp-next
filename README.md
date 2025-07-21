@@ -2,7 +2,7 @@
 
 * **WordPress** (Roots / Bedrock) — headless CMS  
 * **Next.js 15** (React 19 ready) — front‑end  
-* **Traefik 3** — reverse‑proxy + automatic Let’s Encrypt via Cloudflare  
+* **Traefik 2.11** — reverse‑proxy + automatic Let’s Encrypt via Cloudflare  
 * One `docker‑compose.yml` that runs **locally** and **on the droplet**
 
 ---
