@@ -6,10 +6,10 @@ on:
 
 permissions:
   contents: read
-  packages: write        # push to GHCR
+  packages: write
 ################################################################################
 jobs:
-# ────────────────────────── LINT JOBS ─────────────────────────────────────────
+  # ────────────── LINT JOBS ─────────────────────────────────────────
   lint-nextjs:
     runs-on: ubuntu-latest
     steps:
@@ -40,16 +40,14 @@ jobs:
         working-directory: wordpress
         run: composer lint
 
-# ─────────────────────────── DEPLOY ──────────────────────────────────────────
+  # ───────────── DEPLOY ────────────────────────────────────────────
   deploy:
     runs-on: ubuntu-latest
     needs: [ lint-nextjs, lint-wordpress ]
 
     steps:
-      # —— Checkout repo ─────────────────────────────────────────────────────
       - uses: actions/checkout@v4
 
-      # —— Build & push images ──────────────────────────────────────────────
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -67,40 +65,39 @@ jobs:
         env:
           DOMAIN: ${{ secrets.DOMAIN }}
         run: |
-          [ -z "$DOMAIN" ] && { echo "❌  DOMAIN secret is unset"; exit 1; }
+          [ -z "$DOMAIN" ] && { echo "❌ DOMAIN secret is unset"; exit 1; }
           docker build \
             --build-arg NEXT_PUBLIC_WPGRAPHQL_URL=https://wp.$DOMAIN/graphql \
             -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
           docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
-    # —— Provision droplet & deploy stack ──────────────────────────────────
+      # ──────────── PROVISION & DEPLOY ─────────────────────────────
       - name: Deploy on droplet
         uses: appleboy/ssh-action@v1
         env:
           DOMAIN: ${{ secrets.DOMAIN }}
         with:
-          host:           ${{ secrets.DO_HOST }}
-          username:       root
-          key:            ${{ secrets.DO_SSH_KEY }}
-          timeout:        "1200s"
+          host:     ${{ secrets.DO_HOST }}
+          username: root
+          key:      ${{ secrets.DO_SSH_KEY }}
+          timeout:  "1200s"
           command_timeout: "1200s"
-          envs:           DOMAIN
+          envs: DOMAIN
           script: |-
             set -eu
-            [ -z "$DOMAIN" ] && { echo "❌  DOMAIN secret is unset"; exit 1; }
+            [ -z "$DOMAIN" ] && { echo "❌ DOMAIN secret is unset"; exit 1; }
 
             mkdir -p /srv/consultancy
             cd /srv/consultancy
 
-            # ───── housekeeping – prune dangling images once a week ──────
+            # weekly docker‑prune
             if [ ! -f /etc/cron.weekly/docker-prune ]; then
-              printf '%s\n' '#!/usr/bin/env bash' \
-                'docker image prune -af --filter "until=168h"' \
+              printf '%s\n' '#!/usr/bin/env bash' 'docker image prune -af --filter "until=168h"' \
                 > /etc/cron.weekly/docker-prune && chmod +x /etc/cron.weekly/docker-prune
             fi
             docker image prune -af || true
 
-            # ───── docker‑compose.yml (generated on the droplet) ────────
+            # ───── docker‑compose.yml written on droplet ─────
             cat > docker-compose.yml <<'COMPOSE'
             services:
               db:
@@ -109,8 +106,7 @@ jobs:
                 environment:
                   MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
                   MYSQL_DATABASE: wp
-                volumes:
-                  - db_data:/var/lib/mysql
+                volumes: [ "db_data:/var/lib/mysql" ]
                 healthcheck:
                   test: ["CMD-SHELL","healthcheck.sh --connect --innodb_initialized"]
                   interval: 5s
@@ -131,8 +127,7 @@ jobs:
                   WP_HOME: https://wp.${DOMAIN}
                   WP_SITEURL: https://wp.${DOMAIN}/wp
                 expose: [ "80" ]
-                volumes:
-                  - uploads:/var/www/html/web/app/uploads
+                volumes: [ "uploads:/var/www/html/web/app/uploads" ]
                 labels:
                   - traefik.enable=true
                   - traefik.http.routers.wp.rule=Host(`wp.${DOMAIN}`)
@@ -140,8 +135,7 @@ jobs:
                   - traefik.http.routers.wp.tls.certresolver=cf
                   - traefik.http.services.wp.loadbalancer.server.port=80
                 depends_on:
-                  db:
-                    condition: service_healthy
+                  db: { condition: service_healthy }
 
               next:
                 image: ghcr.io/${{ github.repository }}/next:${{ github.sha }}
@@ -156,14 +150,13 @@ jobs:
                   - traefik.http.routers.next.tls.certresolver=cf
                   - traefik.http.services.next.loadbalancer.server.port=3000
                 depends_on:
-                  wordpress:
-                    condition: service_started
+                  wordpress: { condition: service_started }
 
               traefik:
                 image: traefik:3
                 restart: unless-stopped
                 command:
-                  - --log.level=DEBUG
+                  - --log.level=INFO
                   - --providers.docker=true
                   - --providers.docker.exposedbydefault=false
                   - --entrypoints.web.address=:80
@@ -172,9 +165,10 @@ jobs:
                   - --certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare
                   - --certificatesresolvers.cf.acme.email=${LE_EMAIL}
                   - --certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json
+                  - --certificatesresolvers.cf.acme.domains=${DOMAIN},*.${DOMAIN}
                 environment:
                   CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
-                  LE_EMAIL:                ${LE_EMAIL}
+                  LE_EMAIL: ${LE_EMAIL}
                 ports: [ "80:80", "443:443" ]
                 volumes:
                   - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -186,7 +180,7 @@ jobs:
               le: {}
             COMPOSE
 
-            # ───── environment files ───────────────────────────────────
+            # ───── env & secret files ───────────────────────────
             cat > .env <<ENV
             DOMAIN=$DOMAIN
             CLOUDFLARE_DNS_API_TOKEN=${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
@@ -204,60 +198,65 @@ jobs:
             LOGGED_IN_SALT=${{ secrets.LOGGED_IN_SALT }}
             NONCE_SALT=${{ secrets.NONCE_SALT }}
             STACK
-            perl -pi -e 's/\$/\$\$/g' stack.env   # escape $
+            perl -pi -e 's/\$/\$\$/g' stack.env
 
-            # ───── bootstrap script (installer + rewrites) ─────────────
+            # ───── bootstrap helper ─────────────────────────────
             cat > /srv/consultancy/bin/wp-bootstrap.sh <<'BOOT'
             #!/usr/bin/env bash
             set -eu
             docker compose exec wordpress bash -c '
               cd /var/www/html/web &&
-              # fresh install if needed
               wp core is-installed --allow-root || wp core install \
                   --url=https://wp.${DOMAIN} \
                   --title="Production Site" \
                   --admin_user=${WP_ADMIN_USER:-admin} \
                   --admin_password=${WP_ADMIN_PASS:-changeme} \
                   --admin_email=${WP_ADMIN_EMAIL:-you@example.com} \
-                  --skip-email --allow-root
-
-              # ALWAYS ensure WP GraphQL is present & active
-              wp plugin install wp-graphql --activate --allow-root
-
-              # pretty permalinks + flush
-              wp option  update permalink_structure "/%postname%/" --allow-root
+                  --skip-email --allow-root &&
+              wp plugin install wp-graphql --activate --allow-root &&
+              wp option update permalink_structure "/%postname%/" --allow-root &&
               wp rewrite flush --hard --allow-root
             '
             BOOT
             chmod +x /srv/consultancy/bin/wp-bootstrap.sh
 
-            # ───── pull, start, bootstrap, smoke‑test ──────────────────
+            # ───── pull, start, bootstrap ───────────────────────
             docker compose pull
             docker compose up -d --remove-orphans
             /srv/consultancy/bin/wp-bootstrap.sh
 
-            curl -fsSL "https://wp.$DOMAIN/graphql?query=%7B__typename%7D" \
-              || { echo '❌ GraphQL endpoint unreachable'; exit 1; }
+            # ───── GraphQL smoke‑test (retry up to 2 min) ───────
+            echo "⏳ Waiting for WP GraphQL to answer over HTTPS…"
+            for i in {1..24}; do
+              status=$(curl -ksw '%{http_code}' -o /dev/null \
+                       "https://wp.$DOMAIN/graphql?query=%7B__typename%7D") || true
+              [ "$status" = "200" ] && { echo '✅ GraphQL OK'; break; }
+              echo " …still starting (HTTP $status), retry $i/24"; sleep 5
+            done
+            if [ "$status" != "200" ]; then
+              echo '❌ GraphQL endpoint unreachable after 2 min'
+              docker compose logs traefik | tail -n 50
+              exit 1
+            fi
 
-      # —— WordPress housekeeping (themes & cache) ─────────────────────
       - name: WordPress housekeeping
-        uses: appleboy/ssh-action@v1
         if: success()
+        uses: appleboy/ssh-action@v1
         env:
           DOMAIN: ${{ secrets.DOMAIN }}
         with:
-          host:           ${{ secrets.DO_HOST }}
-          username:       root
-          key:            ${{ secrets.DO_SSH_KEY }}
-          timeout:        "1200s"
+          host:     ${{ secrets.DO_HOST }}
+          username: root
+          key:      ${{ secrets.DO_SSH_KEY }}
+          timeout:  "1200s"
           command_timeout: "1200s"
-          envs:           DOMAIN
+          envs: DOMAIN
           script: |-
             set -eu
             cd /srv/consultancy
             docker compose exec --user www-data wordpress wp plugin delete hello || true
             docker compose exec --user www-data wordpress wp plugin update --all || true
-            docker compose exec --user www-data wordpress wp theme  update --all || true
+            docker compose exec --user www-data wordpress wp theme update --all || true
             if ! docker compose exec --user www-data wordpress wp plugin is-installed wp-super-cache >/dev/null 2>&1 ; then
               docker compose exec --user www-data wordpress wp plugin install wp-super-cache --activate
             fi
