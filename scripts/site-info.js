@@ -18,8 +18,10 @@ const wpGraphql = getComposerPackage(composerLock, 'wpackagist-plugin/wp-graphql
 
 const nextPkg = readJSON(path.join(__dirname, '..', 'nextjs-site', 'package.json'));
 
+const domain = process.env.DOMAIN || 'example.com';
+
 const info = {
-  siteName: 'robertfisher.com',
+  siteName: domain,
   urls: {
     local: {
       next: 'http://localhost',
@@ -27,9 +29,9 @@ const info = {
       graphql: 'http://localhost/graphql'
     },
     production: {
-      next: 'https://robertfisher.com',
-      nextWWW: 'https://www.robertfisher.com',
-      wordpress: 'https://wp.robertfisher.com'
+      next: `https://${domain}`,
+      nextWWW: `https://www.${domain}`,
+      wordpress: `https://wp.${domain}`
     }
   },
   versions: {
@@ -43,7 +45,7 @@ const info = {
   },
   routes: {
     wordpress: {
-      production: 'wp.robertfisher.com',
+      production: `wp.${domain}`,
       local: [
         'localhost/wp',
         'localhost/graphql',
@@ -51,7 +53,7 @@ const info = {
       ]
     },
     next: {
-      production: ['robertfisher.com', 'www.robertfisher.com'],
+      production: [domain, `www.${domain}`],
       local: 'localhost'
     }
   }

@@ -2,8 +2,8 @@
 
 | Layer | Tech | URL (prod) |
 |-------|------|------------|
-| CMS & API | WordPress (Bedrock) + WPGraphQL | https://wp.robertfisher.com |
-| Front‑end | Next.js 15 / App Router | https://robertfisher.com |
+| CMS & API | WordPress (Bedrock) + WPGraphQL | https://wp.example.com |
+| Front‑end | Next.js 15 / App Router | https://example.com |
 | DB | MariaDB 11 | internal |
 | Reverse proxy / TLS | Traefik v3 (DNS‑01 via Cloudflare) | 80 / 443 |
 

@@ -65,7 +65,7 @@ jobs:
       - name: Build & push Next.js
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_WPGRAPHQL_URL=https://wp.robertfisher.com/graphql \
+            --build-arg NEXT_PUBLIC_WPGRAPHQL_URL=https://wp.${{ secrets.DOMAIN }}/graphql \
             -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
           docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
@@ -117,13 +117,13 @@ jobs:
                   DB_PASSWORD:   ${MYSQL_ROOT_PASSWORD}
                   DB_HOST:       db
                   WP_ENV:        production
-                  WP_HOME:       https://wp.robertfisher.com
-                  WP_SITEURL:    https://wp.robertfisher.com/wp
+                  WP_HOME:       https://wp.${{ secrets.DOMAIN }}
+                  WP_SITEURL:    https://wp.${{ secrets.DOMAIN }}/wp
                 expose: ["80"]
                 volumes: [ "uploads:/var/www/html/web/app/uploads" ]
                 labels:
                   - traefik.enable=true
-                  - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
+                  - traefik.http.routers.wp.rule=Host(`wp.${{ secrets.DOMAIN }}`)
                   - traefik.http.routers.wp.entrypoints=websecure
                   - traefik.http.routers.wp.tls.certresolver=cf
                   - traefik.http.services.wp.loadbalancer.server.port=80
@@ -135,11 +135,11 @@ jobs:
                 image: ghcr.io/${{ github.repository }}/next:${{ github.sha }}
                 restart: unless-stopped
                 environment:
-                  NEXT_PUBLIC_WPGRAPHQL_URL: https://wp.robertfisher.com/graphql
+                  NEXT_PUBLIC_WPGRAPHQL_URL: https://wp.${{ secrets.DOMAIN }}/graphql
                 expose: ["3000"]
                 labels:
                   - traefik.enable=true
-                  - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
+                  - traefik.http.routers.next.rule=Host(`${{ secrets.DOMAIN }}`) || Host(`www.${{ secrets.DOMAIN }}`)
                   - traefik.http.routers.next.entrypoints=websecure
                   - traefik.http.routers.next.tls.certresolver=cf
                   - traefik.http.services.next.loadbalancer.server.port=3000
@@ -203,7 +203,7 @@ jobs:
             docker compose exec wordpress bash -c '
               cd /var/www/html/web &&
               wp core is-installed --allow-root || wp core install \
-                  --url=https://wp.robertfisher.com \
+                  --url=https://wp.${{ secrets.DOMAIN }} \
                   --title="Production Site" \
                   --admin_user=${WP_ADMIN_USER:-admin} \
                   --admin_password=${WP_ADMIN_PASS:-changeme} \
@@ -222,7 +222,7 @@ jobs:
             /srv/consultancy/bin/wp-bootstrap.sh
 
             ## ───── GraphQL smoke‑test ─────
-            curl -fsSL https://wp.robertfisher.com/graphql?query=%7B__typename%7D \
+            curl -fsSL https://wp.${{ secrets.DOMAIN }}/graphql?query=%7B__typename%7D \
               || { echo "❌ GraphQL endpoint unreachable"; exit 1; }
 
     # —— WordPress housekeeping ——————————————————————————

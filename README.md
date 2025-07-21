@@ -1,4 +1,4 @@
-# 🐳 Bedrock + Next starter — <https://robertfisher.com>
+# 🐳 Bedrock + Next starter — <https://example.com>
 
 * **WordPress** (Roots / Bedrock) — headless CMS  
 * **Next.js 15** (React 19 ready) — front‑end  
@@ -50,14 +50,15 @@ docker compose up -d            # fresh DB, run installer
 
 | Where | What |
 |-------|------|
-| **Cloudflare** | *A* record → droplet IP (for `robertfisher.com`, `www`, `wp`) |
+| **Cloudflare** | *A* record → droplet IP (for your domain, `www`, `wp`) |
 | **Cloudflare → API Tokens** | create token → *Edit zone DNS* (for that zone) |
 | **Droplet** (`/etc/environment`) | ```bash
-LE_EMAIL=robert@robertfisher.com
+LE_EMAIL=you@example.com
 CLOUDFLARE_DNS_API_TOKEN=cf_xxxxxxxxxxxxxxxxx
 MYSQL_ROOT_PASSWORD=prod-secret                         # keep DB pwd out of repo
+DOMAIN=example.com
 ``` |
-| **GitHub → repo → Settings → Secrets** | same three vars above (`LE_EMAIL`, `CLOUDFLARE_DNS_API_TOKEN`, `MYSQL_ROOT_PASSWORD`) |
+| **GitHub → repo → Settings → Secrets** | same vars + `DOMAIN` |
 
 #### Traefik `le` volume
 
