@@ -12,28 +12,28 @@ services:
       - db_data:/var/lib/mysql
 
     # ----- OFFICIAL HEALTH‑CHECK ---------------------------------
-    # Uses the script bundled in mariadb:11 images.  It waits for
+    # Uses the script bundled in mariadb:11 images. It waits for
     # the TCP socket to accept connections *and* for InnoDB to be
     # fully initialised before reporting “healthy”.
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s      # run every 10 seconds
-      timeout: 5s        # fail if the script itself hangs >5 s
-      start_period: 30s  # give MySQL half a minute to boot
-      retries: 6         # → up to 1 minute total before unhealthy
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 6
 
   wordpress:
     build: ./wordpress
     restart: unless-stopped
-    expose: ["80"]
+    expose: [ "80" ]
     environment:
-      DB_NAME:     wp
-      DB_USER:     root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
-      DB_HOST:     db
-      WP_ENV:      ${WP_ENV:-development}
-      WP_HOME:     ${WP_HOME:-http://localhost:8080}
-      WP_SITEURL:  ${WP_SITEURL:-http://localhost:8080/wp}
+      DB_NAME:       wp
+      DB_USER:       root
+      DB_PASSWORD:   ${MYSQL_ROOT_PASSWORD:-secret}
+      DB_HOST:       db
+      WP_ENV:        ${WP_ENV:-development}
+      WP_HOME:       ${WP_HOME:-http://localhost:8080}
+      WP_SITEURL:    ${WP_SITEURL:-http://localhost:8080/wp}
     volumes:
       - uploads:/var/www/html/web/app/uploads
     labels:
@@ -47,7 +47,7 @@ services:
       - traefik.http.routers.wp-local.priority=12
     depends_on:
       db:
-        condition: service_healthy   # now driven by the official check
+        condition: service_healthy
 
   next:
     build:
@@ -55,8 +55,8 @@ services:
       args:
         NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     restart: unless-stopped
-    expose: ["3000"]
-    ports: ["3000:3000"]
+    expose: [ "3000" ]
+    ports:  [ "3000:3000" ]
     environment:
       NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     labels:
@@ -68,7 +68,6 @@ services:
       - traefik.http.routers.next-local.rule=Host(`localhost`)
       - traefik.http.routers.next-local.entrypoints=web
       - traefik.http.routers.next-local.priority=10
-      - traefik.http.services.next.loadbalancer.server.port=3000
     depends_on:
       wordpress:
         condition: service_started
@@ -77,15 +76,18 @@ services:
     image: traefik:3
     restart: unless-stopped
     command:
-      - "--log.level=DEBUG"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.cf.acme.dnschallenge=true"
-      - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
-      - "--certificatesresolvers.cf.acme.email=${LE_EMAIL:-local@example.com}"
-      - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
+      - --log.level=INFO
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      # ACME → Cloudflare DNS‑01
+      - --certificatesresolvers.cf.acme.dnschallenge=true
+      - --certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.cf.acme.email=${LE_EMAIL:-local@example.com}
+      - --certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json
+      # Request apex *and* wildcard certs on container start
+      - --certificatesresolvers.cf.acme.domains=${DOMAIN:-example.com},*.${DOMAIN:-example.com}
     environment:
       CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN:-dev}
       LE_EMAIL: ${LE_EMAIL:-local@example.com}
@@ -95,7 +97,7 @@ services:
       - "443:443"
       - "8443:443"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - le:/letsencrypt
 
 volumes:
