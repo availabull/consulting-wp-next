@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main, master ]
 
+# allow the workflow to read the repo and push images to GHCR
 permissions:
   contents: read
   packages: write
@@ -48,6 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ---------- Build & push images --------------------------------
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -71,7 +73,7 @@ jobs:
             -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
           docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
-      # ──────────── PROVISION & DEPLOY ─────────────────────────────
+      # ---------- Provision droplet & deploy stack -------------------
       - name: Deploy on droplet
         uses: appleboy/ssh-action@v1
         env:
@@ -92,12 +94,13 @@ jobs:
 
             # weekly docker‑prune
             if [ ! -f /etc/cron.weekly/docker-prune ]; then
-              printf '%s\n' '#!/usr/bin/env bash' 'docker image prune -af --filter "until=168h"' \
+              printf '%s\n' '#!/usr/bin/env bash' \
+                'docker image prune -af --filter "until=168h"' \
                 > /etc/cron.weekly/docker-prune && chmod +x /etc/cron.weekly/docker-prune
             fi
             docker image prune -af || true
 
-            # ───── docker‑compose.yml written on droplet ─────
+            # -------- docker‑compose.yml written on droplet ----------
             cat > docker-compose.yml <<'COMPOSE'
             services:
               db:
@@ -153,7 +156,7 @@ jobs:
                   wordpress: { condition: service_started }
 
               traefik:
-                image: traefik:2.11
+                image: traefik:v2.11            # ← pin to Traefik v2
                 restart: unless-stopped
                 command:
                   - --log.level=INFO
@@ -165,8 +168,7 @@ jobs:
                   - --certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare
                   - --certificatesresolvers.cf.acme.email=${LE_EMAIL}
                   - --certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json
-                  - --entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}
-                  - --entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}
+                  - --certificatesresolvers.cf.acme.domains=${DOMAIN},*.${DOMAIN}
                 environment:
                   CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
                   LE_EMAIL: ${LE_EMAIL}
@@ -181,7 +183,7 @@ jobs:
               le: {}
             COMPOSE
 
-            # ───── env & secret files ───────────────────────────
+            # -------- env & secret files -----------------------------
             cat > .env <<ENV
             DOMAIN=$DOMAIN
             CLOUDFLARE_DNS_API_TOKEN=${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
@@ -199,9 +201,9 @@ jobs:
             LOGGED_IN_SALT=${{ secrets.LOGGED_IN_SALT }}
             NONCE_SALT=${{ secrets.NONCE_SALT }}
             STACK
-            perl -pi -e 's/\$/\$\$/g' stack.env
+            perl -pi -e 's/\$/\$\$/g' stack.env   # escape $
 
-            # ───── bootstrap helper ─────────────────────────────
+            # -------- bootstrap helper -------------------------------
             cat > /srv/consultancy/bin/wp-bootstrap.sh <<'BOOT'
             #!/usr/bin/env bash
             set -eu
@@ -221,12 +223,12 @@ jobs:
             BOOT
             chmod +x /srv/consultancy/bin/wp-bootstrap.sh
 
-            # ───── pull, start, bootstrap ───────────────────────
+            # -------- pull, start, bootstrap -------------------------
             docker compose pull
             docker compose up -d --remove-orphans
             /srv/consultancy/bin/wp-bootstrap.sh
 
-            # ───── GraphQL smoke‑test (retry up to 2 min) ───────
+            # -------- GraphQL smoke‑test (≤ 2 min) -------------------
             echo "⏳ Waiting for WP GraphQL to answer over HTTPS…"
             for i in {1..24}; do
               status=$(curl -ksw '%{http_code}' -o /dev/null \
@@ -240,6 +242,7 @@ jobs:
               exit 1
             fi
 
+      # ---------- WordPress housekeeping ----------------------------
       - name: WordPress housekeeping
         if: success()
         uses: appleboy/ssh-action@v1
@@ -257,7 +260,7 @@ jobs:
             cd /srv/consultancy
             docker compose exec --user www-data wordpress wp plugin delete hello || true
             docker compose exec --user www-data wordpress wp plugin update --all || true
-            docker compose exec --user www-data wordpress wp theme update --all || true
+            docker compose exec --user www-data wordpress wp theme  update --all || true
             if ! docker compose exec --user www-data wordpress wp plugin is-installed wp-super-cache >/dev/null 2>&1 ; then
               docker compose exec --user www-data wordpress wp plugin install wp-super-cache --activate
             fi
