@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Disable WordPress core canonical redirect on the `/graphql` endpoint.
  *
@@ -24,5 +25,5 @@ add_filter(
         return $redirect_url; // default behaviour elsewhere
     },
     5, // run *before* WP core’s canonical check (priority 10)
-    2
+    2,
 );
