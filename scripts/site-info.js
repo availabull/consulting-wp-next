@@ -18,8 +18,24 @@ const wpGraphql = getComposerPackage(composerLock, 'wpackagist-plugin/wp-graphql
 
 const nextPkg = readJSON(path.join(__dirname, '..', 'nextjs-site', 'package.json'));
 
+// Determine the base domain either from a dedicated SITE_DOMAIN variable or
+// by parsing WP_HOME.  Fallback to the example domain used in this repo.
+const wpHome = process.env.WP_HOME;
+let baseDomain = process.env.SITE_DOMAIN;
+if (!baseDomain && wpHome) {
+  try {
+    const host = new URL(wpHome).hostname;
+    baseDomain = host.replace(/^wp\./, '').replace(/^www\./, '');
+  } catch {
+    // ignore malformed WP_HOME
+  }
+}
+if (!baseDomain) {
+  baseDomain = 'robertfisher.com';
+}
+
 const info = {
-  siteName: 'robertfisher.com',
+  siteName: baseDomain,
   urls: {
     local: {
       next: 'http://localhost',
@@ -27,9 +43,9 @@ const info = {
       graphql: 'http://localhost/graphql'
     },
     production: {
-      next: 'https://robertfisher.com',
-      nextWWW: 'https://www.robertfisher.com',
-      wordpress: 'https://wp.robertfisher.com'
+      next: `https://${baseDomain}`,
+      nextWWW: `https://www.${baseDomain}`,
+      wordpress: `https://wp.${baseDomain}`
     }
   },
   versions: {
@@ -43,7 +59,7 @@ const info = {
   },
   routes: {
     wordpress: {
-      production: 'wp.robertfisher.com',
+      production: `wp.${baseDomain}`,
       local: [
         'localhost/wp',
         'localhost/graphql',
@@ -51,7 +67,7 @@ const info = {
       ]
     },
     next: {
-      production: ['robertfisher.com', 'www.robertfisher.com'],
+      production: [baseDomain, `www.${baseDomain}`],
       local: 'localhost'
     }
   }
