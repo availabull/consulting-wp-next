@@ -6,24 +6,23 @@ on:
 
 permissions:
   contents: read
-  packages: write          # push to GHCR
+  packages: write      # push to GHCR
 
 jobs:
-  # ────────────────────────── LINT JOBS ──────────────────────────
+# ────────────────────────── LINT JOBS ──────────────────────────
   lint-nextjs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Set up Node.js
         uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install dependencies (required for lint)
+        with: { node-version: 20 }
+      - name: Install deps
         working-directory: nextjs-site
         run: |
           corepack enable pnpm
           pnpm install --frozen-lockfile
-      - name: Run pnpm lint
+      - name: pnpm lint
         working-directory: nextjs-site
         run: pnpm lint
 
@@ -33,24 +32,24 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.1'
-      - name: Install dependencies
+        with: { php-version: '8.1' }
+      - name: Install deps
         working-directory: wordpress
         run: composer install --no-interaction
-      - name: Run composer lint
+      - name: composer lint
         working-directory: wordpress
         run: composer lint
 
-  # ─────────────────────────── DEPLOY ────────────────────────────
+# ─────────────────────────── DEPLOY ────────────────────────────
   deploy:
     runs-on: ubuntu-latest
     needs: [ lint-nextjs, lint-wordpress ]
 
     steps:
+    # —— Checkout repo ————————————————————————————————
       - uses: actions/checkout@v4
 
-      # 1. Build images & push to GHCR ---------------------------------------
+    # —— Build & push images ————————————————————————————
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -70,21 +69,20 @@ jobs:
             -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
           docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
-      # 2. Provision droplet & write files -----------------------------------
+    # —— Provision droplet & deploy stack ——————————————————
       - name: Deploy on droplet
         uses: appleboy/ssh-action@v1
         with:
-          host:           ${{ secrets.DO_HOST }}
-          username:       root
-          key:            ${{ secrets.DO_SSH_KEY }}
-          timeout:        "1200s"   # 20 min
+          host:     ${{ secrets.DO_HOST }}
+          username: root
+          key:      ${{ secrets.DO_SSH_KEY }}
+          timeout:  "1200s"
           command_timeout: "1200s"
           script: |
             set -eu
-            mkdir -p /srv/consultancy
-            cd /srv/consultancy
+            mkdir -p /srv/consultancy && cd /srv/consultancy
 
-            # housekeeping – weekly docker‑prune
+            ## housekeeping – weekly docker prune
             if [ ! -f /etc/cron.weekly/docker-prune ]; then
               printf '%s\n' '#!/usr/bin/env bash' \
                 'docker image prune -af --filter "until=168h"' \
@@ -92,7 +90,7 @@ jobs:
             fi
             docker image prune -af || true
 
-            # -------- docker‑compose.yml (remote) --------
+            ## ───── docker‑compose.yml (remote) ─────
             cat > docker-compose.yml <<'COMPOSE'
             services:
               db:
@@ -106,8 +104,8 @@ jobs:
                   test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
                   interval: 5s
                   timeout: 5s
-                  start_period: 30s   # give InnoDB a chance to initialise
-                  retries: 60         # ≈ 5 min max
+                  start_period: 30s
+                  retries: 60
 
               wordpress:
                 image: ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
@@ -121,7 +119,7 @@ jobs:
                   WP_ENV:        production
                   WP_HOME:       https://wp.robertfisher.com
                   WP_SITEURL:    https://wp.robertfisher.com/wp
-                expose: [ "80" ]
+                expose: ["80"]
                 volumes: [ "uploads:/var/www/html/web/app/uploads" ]
                 labels:
                   - traefik.enable=true
@@ -138,7 +136,7 @@ jobs:
                 restart: unless-stopped
                 environment:
                   NEXT_PUBLIC_WPGRAPHQL_URL: https://wp.robertfisher.com/graphql
-                expose: [ "3000" ]
+                expose: ["3000"]
                 labels:
                   - traefik.enable=true
                   - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
@@ -164,7 +162,7 @@ jobs:
                   - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
                 environment:
                   CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
-                  LE_EMAIL:                ${LE_EMAIL}
+                  LE_EMAIL: ${LE_EMAIL}
                 ports:
                   - "80:80"
                   - "443:443"
@@ -178,7 +176,7 @@ jobs:
               le:
             COMPOSE
 
-            # -------- .env & stack.env --------
+            ## ───── .env & stack.env ─────
             cat > .env <<ENV
             CLOUDFLARE_DNS_API_TOKEN=${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
             LE_EMAIL=${{ secrets.LE_EMAIL }}
@@ -195,9 +193,9 @@ jobs:
             LOGGED_IN_SALT=${{ secrets.LOGGED_IN_SALT }}
             NONCE_SALT=${{ secrets.NONCE_SALT }}
             STACK
-            perl -pi -e 's/\$/\$\$/g' stack.env   # escape $ for env‑file
+            perl -pi -e 's/\$/\$\$/g' stack.env
 
-            # -------- helper script (installer only) --------
+            ## ───── helper bootstrap script ─────
             mkdir -p /srv/consultancy/bin
             cat > /srv/consultancy/bin/wp-bootstrap.sh <<'BOOT'
             #!/usr/bin/env bash
@@ -218,20 +216,24 @@ jobs:
             BOOT
             chmod +x /srv/consultancy/bin/wp-bootstrap.sh
 
-            # -------- pull, start, bootstrap --------
+            ## ───── pull, start, bootstrap ─────
             docker compose pull
             docker compose up -d --remove-orphans
             /srv/consultancy/bin/wp-bootstrap.sh
 
-      # 3. One‑shot WP‑CLI maintenance ---------------------------------------
+            ## ───── GraphQL smoke‑test ─────
+            curl -fsSL https://wp.robertfisher.com/graphql?query=%7B__typename%7D \
+              || { echo "❌ GraphQL endpoint unreachable"; exit 1; }
+
+    # —— WordPress housekeeping ——————————————————————————
       - name: WordPress housekeeping
         uses: appleboy/ssh-action@v1
         if: success()
         with:
-          host:           ${{ secrets.DO_HOST }}
-          username:       root
-          key:            ${{ secrets.DO_SSH_KEY }}
-          timeout:        "1200s"
+          host:     ${{ secrets.DO_HOST }}
+          username: root
+          key:      ${{ secrets.DO_SSH_KEY }}
+          timeout:  "1200s"
           command_timeout: "1200s"
           script: |
             set -eu

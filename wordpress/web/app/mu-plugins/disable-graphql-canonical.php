@@ -1,24 +1,28 @@
 <?php
 /**
- * Disable WordPress core’s redirect_canonical() on /graphql requests.
- * Works before WPGraphQL has a chance to set its constants/helpers.
+ * Disable WordPress core canonical redirect on the `/graphql` endpoint.
+ *
+ * We short‑circuit `redirect_canonical()` very early so requests to
+ * https://example.com/graphql (no trailing slash) are served directly by
+ * WP GraphQL instead of being 301‑redirected to `/graphql/`.
  *
  * @see https://developer.wordpress.org/reference/hooks/redirect_canonical/
  */
+
 add_filter(
     'redirect_canonical',
-    static function ( $redirect_url, $requested_url ) {
+    static function ($redirect_url, $requested_url) {
 
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-        $path = wp_parse_url( $requested_url, PHP_URL_PATH );
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+        $path = wp_parse_url($requested_url, PHP_URL_PATH);
 
-        // Match …/graphql or …/graphql/  (case‑insensitive)
-        if ( $path && preg_match( '#/graphql/?$#i', $path ) ) {
-            return false;   // cancel canonical redirect
+        // Match “…/graphql” or “…/graphql/” (case‑insensitive).
+        if ($path && preg_match('#/graphql/?$#i', $path)) {
+            return false; // cancel canonical redirect
         }
 
-        return $redirect_url;   // keep normal behaviour elsewhere
+        return $redirect_url; // default behaviour elsewhere
     },
-    5,      // run *before* WP’s built‑in canonical check (priority 10)
+    5, // run *before* WP core’s canonical check (priority 10)
     2
 );
