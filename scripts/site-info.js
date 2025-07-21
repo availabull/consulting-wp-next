@@ -10,6 +10,7 @@ function getComposerPackage(lock, name) {
   return lock.packages.find(pkg => pkg.name === name);
 }
 
+// Load Composer lock and Next.js package.json
 const lockPath = path.join(__dirname, '..', 'wordpress', 'composer.lock');
 const composerLock = readJSON(lockPath);
 
@@ -18,13 +19,13 @@ const wpGraphql = getComposerPackage(composerLock, 'wpackagist-plugin/wp-graphql
 
 const nextPkg = readJSON(path.join(__dirname, '..', 'nextjs-site', 'package.json'));
 
-// Determine the base domain either from a dedicated SITE_DOMAIN variable or
-// by parsing WP_HOME.  Fallback to the example domain used in this repo.
+// Determine the base domain from environment or WP_HOME, fallback to default
 const wpHome = process.env.WP_HOME;
 let baseDomain = process.env.SITE_DOMAIN;
 if (!baseDomain && wpHome) {
   try {
     const host = new URL(wpHome).hostname;
+    // Strip leading subdomains wp. or www.
     baseDomain = host.replace(/^wp\./, '').replace(/^www\./, '');
   } catch {
     // ignore malformed WP_HOME
@@ -34,6 +35,7 @@ if (!baseDomain) {
   baseDomain = 'robertfisher.com';
 }
 
+// Build info object
 const info = {
   siteName: baseDomain,
   urls: {

@@ -38,7 +38,7 @@ services:
       - uploads:/var/www/html/web/app/uploads
     labels:
       - traefik.enable=true
-      - traefik.http.routers.wp.rule=Host(`wp.robertfisher.com`)
+      - traefik.http.routers.wp.rule=Host(`wp.${DOMAIN:-example.com}`)
       - traefik.http.routers.wp.entrypoints=websecure
       - traefik.http.routers.wp.tls.certresolver=cf
       - traefik.http.services.wp.loadbalancer.server.port=80
@@ -61,7 +61,7 @@ services:
       NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     labels:
       - traefik.enable=true
-      - traefik.http.routers.next.rule=Host(`robertfisher.com`) || Host(`www.robertfisher.com`)
+      - traefik.http.routers.next.rule=Host(`${DOMAIN:-example.com}`) || Host(`www.${DOMAIN:-example.com}`)
       - traefik.http.routers.next.entrypoints=websecure
       - traefik.http.routers.next.tls.certresolver=cf
       - traefik.http.services.next.loadbalancer.server.port=3000
