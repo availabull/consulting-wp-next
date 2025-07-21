@@ -165,7 +165,8 @@ jobs:
                   - --certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare
                   - --certificatesresolvers.cf.acme.email=${LE_EMAIL}
                   - --certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json
-                  - --certificatesresolvers.cf.acme.domains=${DOMAIN},*.${DOMAIN}
+                  - --entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}
+                  - --entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}
                 environment:
                   CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
                   LE_EMAIL: ${LE_EMAIL}
