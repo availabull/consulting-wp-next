@@ -124,13 +124,13 @@ jobs:
                 restart: unless-stopped
                 env_file: [ ".env", "stack.env" ]
                 environment:
-                  DB_NAME: wp
-                  DB_USER: root
-                  DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-                  DB_HOST: db
-                  WP_ENV: production
-                  WP_HOME: https://wp.${DOMAIN}
-                  WP_SITEURL: https://wp.${DOMAIN}/wp
+                  DB_NAME:       wp
+                  DB_USER:       root
+                  DB_PASSWORD:   ${MYSQL_ROOT_PASSWORD}
+                  DB_HOST:       db
+                  WP_ENV:        production
+                  WP_HOME:       https://wp.${DOMAIN}
+                  WP_SITEURL:    https://wp.${DOMAIN}/wp
                 expose: [ "80" ]
                 volumes:
                   - uploads:/var/www/html/web/app/uploads
