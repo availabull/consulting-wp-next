@@ -25,7 +25,7 @@ cd wordpress   && composer install
 | build & start | `docker compose up --build -d` | – |
 | WP admin | – | <http://localhost:8080/wp/wp-admin> |
 | GraphQL | – | <http://localhost:8080/graphql> |
-| Next.js (container) | – | <http://localhost:3100> |
+| Next.js (container) | – | <http://localhost:3000> |
 | ultrafast React dev (Turbopack) | `cd nextjs-site && pnpm dev` | <http://localhost:3000> |
 | stop stack | `docker compose down` | – |
 | **wipe DB + uploads** | ```bash
@@ -41,7 +41,7 @@ docker compose up -d            # fresh DB, run installer
 * `http://localhost:8080/graphql` returns `{"errors":[{"message":"Must provide query string"}]}`
   (no redirect to `/graphql/`; if you see a 301, flush permalinks and verify
   `web/app/mu-plugins/disable-graphql-canonical.php` is present)
-* `http://localhost:3100` renders the Next.js front‑end (or use Turbopack on :3000).
+* `http://localhost:3000` renders the Next.js front‑end (or use Turbopack on :3000).
 
 ---
 
