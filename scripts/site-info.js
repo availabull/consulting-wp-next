@@ -10,6 +10,7 @@ function getComposerPackage(lock, name) {
   return lock.packages.find(pkg => pkg.name === name);
 }
 
+// Load Composer lock and Next.js package.json
 const lockPath = path.join(__dirname, '..', 'wordpress', 'composer.lock');
 const composerLock = readJSON(lockPath);
 
@@ -18,10 +19,25 @@ const wpGraphql = getComposerPackage(composerLock, 'wpackagist-plugin/wp-graphql
 
 const nextPkg = readJSON(path.join(__dirname, '..', 'nextjs-site', 'package.json'));
 
-const domain = process.env.DOMAIN || 'example.com';
+// Determine the base domain from environment or WP_HOME, fallback to default
+const wpHome = process.env.WP_HOME;
+let baseDomain = process.env.SITE_DOMAIN;
+if (!baseDomain && wpHome) {
+  try {
+    const host = new URL(wpHome).hostname;
+    // Strip leading subdomains wp. or www.
+    baseDomain = host.replace(/^wp\./, '').replace(/^www\./, '');
+  } catch {
+    // ignore malformed WP_HOME
+  }
+}
+if (!baseDomain) {
+  baseDomain = 'robertfisher.com';
+}
 
+// Build info object
 const info = {
-  siteName: domain,
+  siteName: baseDomain,
   urls: {
     local: {
       next: 'http://localhost',
@@ -29,9 +45,9 @@ const info = {
       graphql: 'http://localhost/graphql'
     },
     production: {
-      next: `https://${domain}`,
-      nextWWW: `https://www.${domain}`,
-      wordpress: `https://wp.${domain}`
+      next: `https://${baseDomain}`,
+      nextWWW: `https://www.${baseDomain}`,
+      wordpress: `https://wp.${baseDomain}`
     }
   },
   versions: {
@@ -45,7 +61,7 @@ const info = {
   },
   routes: {
     wordpress: {
-      production: `wp.${domain}`,
+      production: `wp.${baseDomain}`,
       local: [
         'localhost/wp',
         'localhost/graphql',
@@ -53,7 +69,7 @@ const info = {
       ]
     },
     next: {
-      production: [domain, `www.${domain}`],
+      production: [baseDomain, `www.${baseDomain}`],
       local: 'localhost'
     }
   }
