@@ -23,6 +23,7 @@ tmp/
 # ────────────────────────── Environment files ───────────────────────
 .env
 .env.*
+!nextjs-site/.env.example
 wordpress/.env        # if someone creates a runtime .env inside WP
 stack.env
 
