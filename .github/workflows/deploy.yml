@@ -6,7 +6,7 @@ on:
 
 permissions:
   contents: read
-  packages: write    # push to GHCR
+  packages: write          # push to GHCR
 ###############################################################################
 jobs:
 # ────────────────────────── LINT JOBS ────────────────────────────────────────
@@ -86,7 +86,7 @@ jobs:
           timeout:  "1200s"
           command_timeout: "1200s"
           envs: DOMAIN
-          script: |
+          script: |-
             set -eu
             [ -z "$DOMAIN" ] && { echo "❌ DOMAIN secret is unset"; exit 1; }
 
@@ -124,13 +124,13 @@ jobs:
                 restart: unless-stopped
                 env_file: [ ".env", "stack.env" ]
                 environment:
-                  DB_NAME:       wp
-                  DB_USER:       root
-                  DB_PASSWORD:   ${MYSQL_ROOT_PASSWORD}
-                  DB_HOST:       db
-                  WP_ENV:        production
-                  WP_HOME:       https://wp.${DOMAIN}
-                  WP_SITEURL:    https://wp.${DOMAIN}/wp
+                  DB_NAME: wp
+                  DB_USER: root
+                  DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+                  DB_HOST: db
+                  WP_ENV: production
+                  WP_HOME: https://wp.${DOMAIN}
+                  WP_SITEURL: https://wp.${DOMAIN}/wp
                 expose: [ "80" ]
                 volumes:
                   - uploads:/var/www/html/web/app/uploads
@@ -211,13 +211,13 @@ jobs:
 
             # ─── bootstrap script ───────────────────────────────────────
             mkdir -p /srv/consultancy/bin
-            cat > /srv/consultancy/bin/wp-bootstrap.sh <<BOOT
+            cat > /srv/consultancy/bin/wp-bootstrap.sh <<'BOOT'
             #!/usr/bin/env bash
             set -eu
             docker compose exec wordpress bash -c '
               cd /var/www/html/web &&
               wp core is-installed --allow-root || wp core install \
-                  --url=https://wp.'$DOMAIN' \
+                  --url=https://wp.${DOMAIN} \
                   --title="Production Site" \
                   --admin_user=${WP_ADMIN_USER:-admin} \
                   --admin_password=${WP_ADMIN_PASS:-changeme} \
@@ -227,7 +227,7 @@ jobs:
               wp plugin activate wp-graphql --allow-root &&
               wp rewrite flush --hard --allow-root
             '
-BOOT
+            BOOT
             chmod +x /srv/consultancy/bin/wp-bootstrap.sh
 
             # ─── pull, start, bootstrap, smoke test ────────────────────
@@ -251,7 +251,7 @@ BOOT
           timeout:  "1200s"
           command_timeout: "1200s"
           envs: DOMAIN
-          script: |
+          script: |-
             set -eu
             cd /srv/consultancy
             docker compose exec --user www-data wordpress wp plugin delete hello || true
@@ -261,6 +261,5 @@ BOOT
             if ! docker compose exec --user www-data wordpress wp plugin is-installed wp-super-cache >/dev/null 2>&1 ; then
               docker compose exec --user www-data wordpress wp plugin install wp-super-cache --activate
             fi
-            docker compose exec --user www-data wordpress wp theme install hello-elementor --activate || true
             INACTIVE=$(docker compose exec --user www-data wordpress wp theme list --status=inactive --field=name | grep '^twenty' || true)
             [ -n "$INACTIVE" ] && docker compose exec --user www-data wordpress wp theme delete $INACTIVE || true
