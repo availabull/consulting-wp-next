@@ -49,12 +49,7 @@ RUN curl -sSL https://downloads.wordpress.org/theme/hello-elementor.zip \
  && unzip -q /tmp/hello.zip -d web/app/themes \
  && rm /tmp/hello.zip
 
-# ─── bake WP GraphQL plugin (latest stable) ────────────────────────
-RUN rm -rf web/app/plugins/wp-graphql && \
-    curl -sSL https://downloads.wordpress.org/plugin/wp-graphql.latest-stable.zip \
-      -o /tmp/wp-graphql.zip && \
-    unzip -qo /tmp/wp-graphql.zip -d web/app/plugins && \
-    rm /tmp/wp-graphql.zip
+# ─── WP GraphQL plugin installed via Composer ──────────────────────
 
 # ─── remove bundled Twenty* themes (core + Bedrock copy) ───────────
 RUN rm -rf web/wp/wp-content/themes/twenty* \
