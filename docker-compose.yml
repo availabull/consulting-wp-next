@@ -60,6 +60,10 @@ services:
       - "3000:3000"
     environment:
       NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      interval: 10s
+      retries: 30
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.next.rule=Host(`${DOMAIN:-example.com}`) || Host(`www.${DOMAIN:-example.com}`)"
@@ -76,6 +80,11 @@ services:
   traefik:
     image: traefik:v2.11
     restart: unless-stopped
+    depends_on:
+      next:
+        condition: service_healthy
+      wordpress:
+        condition: service_healthy
     command:
       - "--log.level=DEBUG"
       - "--providers.docker=true"

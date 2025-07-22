@@ -42,6 +42,7 @@ docker compose up -d            # fresh DB, run installer
   (no redirect to `/graphql/`; if you see a 301, flush permalinks and verify
   `web/app/mu-plugins/disable-graphql-canonical.php` is present)
 * `http://localhost:3000` renders the Next.js front‑end (or use Turbopack on :3000).
+* Traefik waits until WordPress and Next.js report healthy status before routing.
 
 ---
 
