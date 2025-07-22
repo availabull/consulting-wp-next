@@ -70,7 +70,7 @@ jobs:
           [ -z "$DOMAIN" ] && { echo "❌ DOMAIN secret is unset"; exit 1; }
           docker build \
             --build-arg NEXT_PUBLIC_WPGRAPHQL_URL=https://wp.$DOMAIN/graphql \
-            -f nextjs-site/Dockerfile \
+            --build-arg NEXT_SKIP_BUILD_STATIC_GENERATION=true \
             -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
           docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
@@ -230,20 +230,8 @@ jobs:
             docker compose up -d --remove-orphans
             /srv/consultancy/bin/wp-bootstrap.sh
 
-            # -------- GraphQL smoke‑test (≤ 2 min) -------------------
-            echo "⏳ Waiting for WP GraphQL to answer over HTTPS…"
-            for i in {1..24}; do
-              status=$(curl -ksw '%{http_code}' -o /dev/null \
-                       "https://wp.$DOMAIN/graphql?query=%7B__typename%7D") || true
-              [ "$status" = "200" ] && { echo '✅ GraphQL OK'; break; }
-              echo " …still starting (HTTP $status), retry $i/24"; sleep 5
-            done
-            if [ "$status" != "200" ]; then
-              echo '❌ GraphQL endpoint unreachable after 2 min'
-              docker compose logs traefik | tail -n 50
-              docker compose logs wordpress | tail -n 50
-              exit 1
-            fi
+            # -------- wait for WordPress -----------------------------
+            docker compose wait wordpress
 
       # ---------- WordPress housekeeping ----------------------------
       - name: WordPress housekeeping

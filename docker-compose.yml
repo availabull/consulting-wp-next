@@ -31,6 +31,10 @@ services:
       WP_SITEURL: ${WP_SITEURL:-http://localhost:8080/wp}
     volumes:
       - uploads:/var/www/html/web/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost/graphql?query=%7B__typename%7D || exit 1"]
+      interval: 10s
+      retries: 30
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.wp.rule=Host(`wp.${DOMAIN:-example.com}`)"
