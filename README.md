@@ -22,7 +22,7 @@ cd wordpress   && composer install
 
 | Goal | One‑liner | Opens in browser |
 |------|-----------|------------------|
-| build & start | `docker compose up --build -d` | – |
+| build & start | `./bin/check-traefik.sh && docker compose up --build -d` | – |
 | WP admin | – | <http://localhost:8000/wp/wp-admin> |
 | GraphQL | – | <http://localhost:8000/graphql> |
 | Next.js (container) | – | <http://localhost:3000> |
@@ -81,6 +81,8 @@ Create the file inside that directory before starting Traefik:
 touch /var/lib/docker/volumes/consulting-wp-next_le/_data/acme.json
 chmod 600 /var/lib/docker/volumes/consulting-wp-next_le/_data/acme.json
 ```
+
+Run `./bin/check-traefik.sh` to verify these prerequisites before starting Traefik.
 
 ### 2.2 CI/CD flow
 
