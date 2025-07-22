@@ -239,6 +239,7 @@ jobs:
             if [ "$status" != "200" ]; then
               echo '❌ GraphQL endpoint unreachable after 2 min'
               docker compose logs traefik | tail -n 50
+              docker compose logs wordpress | tail -n 50
               exit 1
             fi
 
