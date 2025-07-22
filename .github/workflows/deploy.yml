@@ -149,7 +149,7 @@ jobs:
                 expose: [ "3000" ]
                 labels:
                   - traefik.enable=true
-                  - traefik.http.routers.next.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)
+                  - traefik.http.routers.next.rule=HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.${DOMAIN}`, `${DOMAIN}`)
                   - traefik.http.routers.next.entrypoints=websecure
                   - traefik.http.routers.next.tls.certresolver=cf
                   - traefik.http.services.next.loadbalancer.server.port=3000
@@ -177,7 +177,6 @@ jobs:
                   - --certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare
                   - --certificatesresolvers.cf.acme.email=${LE_EMAIL}
                   - --certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json
-                  - --certificatesresolvers.cf.acme.domains=${DOMAIN},*.${DOMAIN}
                 environment:
                   CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
                   LE_EMAIL: ${LE_EMAIL}
