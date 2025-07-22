@@ -216,7 +216,8 @@ jobs:
                   --admin_password=${WP_ADMIN_PASS:-changeme} \
                   --admin_email=${WP_ADMIN_EMAIL:-you@example.com} \
                   --skip-email --allow-root &&
-              wp plugin install wp-graphql --activate --allow-root &&
+              wp plugin is-active wp-graphql --allow-root || \
+                wp plugin activate wp-graphql --allow-root &&
               wp option update permalink_structure "/%postname%/" --allow-root &&
               wp rewrite flush --hard --allow-root
             '
