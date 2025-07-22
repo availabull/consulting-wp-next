@@ -20,3 +20,7 @@ echo "MYSQL_ROOT_PASSWORD=secret" > .env
 docker compose up --build -d          # builds WP + Next
 open http://localhost:8000/wp/wp-admin/   # install WordPress
 open http://localhost:8000               # Next.js
+```
+
+Run ./bin/wp-bootstrap.sh after the containers start to install WordPress
+automatically and activate WPGraphQL.
