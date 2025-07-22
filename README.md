@@ -22,7 +22,7 @@ cd wordpress   && composer install
 
 | Goal | One‑liner | Opens in browser |
 |------|-----------|------------------|
-| build & start | `./bin/check-traefik.sh && docker compose up --build -d` | – |
+| build & start | `./bin/check-traefik.sh && docker compose up -d` | – |
 | WP admin | – | <http://localhost:8000/wp/wp-admin> |
 | GraphQL | – | <http://localhost:8000/graphql> |
 | Next.js (container) | – | <http://localhost:3000> |
@@ -66,23 +66,10 @@ DOMAIN=example.com
 
 #### Traefik `le` volume
 
-Traefik keeps Let’s Encrypt data in the named volume `le`.  That volume
-needs an `acme.json` file with permissions `600`.
-Inspect the volume to find its path (usually
-`/var/lib/docker/volumes/<project>_le/_data`):
-
-```bash
-docker volume inspect le
-```
-
-Create the file inside that directory before starting Traefik:
-
-```bash
-touch /var/lib/docker/volumes/consulting-wp-next_le/_data/acme.json
-chmod 600 /var/lib/docker/volumes/consulting-wp-next_le/_data/acme.json
-```
-
-Run `./bin/check-traefik.sh` to verify these prerequisites before starting Traefik.
+Traefik stores Let’s Encrypt data in the `le` volume. The container automatically
+creates `/letsencrypt/acme.json` with permissions `600` when it starts.
+Run `./bin/check-traefik.sh` before starting to verify that required environment
+variables are set.
 
 ### 2.2 CI/CD flow
 

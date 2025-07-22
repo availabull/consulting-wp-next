@@ -80,6 +80,14 @@ services:
   traefik:
     image: traefik:v2.11
     restart: unless-stopped
+    init: true
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        touch /letsencrypt/acme.json
+        chmod 600 /letsencrypt/acme.json
+        exec traefik "$@"
     depends_on:
       next:
         condition: service_healthy
