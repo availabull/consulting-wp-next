@@ -34,15 +34,15 @@ services:
     volumes:
       - uploads:/var/www/html/web/app/uploads
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.wp.rule=Host(`wp.${DOMAIN:-example.com}`)
-      - traefik.http.routers.wp.entrypoints=websecure
-      - traefik.http.routers.wp.tls.certresolver=cf
-      - traefik.http.services.wp.loadbalancer.server.port=80
+      - "traefik.enable=true"
+      - "traefik.http.routers.wp.rule=Host(`wp.${DOMAIN:-example.com}`)"
+      - "traefik.http.routers.wp.entrypoints=websecure"
+      - "traefik.http.routers.wp.tls.certresolver=cf"
+      - "traefik.http.services.wp.loadbalancer.server.port=80"
       # local helper router (no TLS, higher priority)
-      - traefik.http.routers.wp-local.rule=Host(`localhost`) && ( PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`) )
-      - traefik.http.routers.wp-local.entrypoints=web
-      - traefik.http.routers.wp-local.priority=12
+      - "traefik.http.routers.wp-local.rule=Host(`localhost`) && ( PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`) )"
+      - "traefik.http.routers.wp-local.entrypoints=web"
+      - "traefik.http.routers.wp-local.priority=12"
     depends_on:
       db:
         condition: service_healthy
@@ -59,22 +59,22 @@ services:
     environment:
       NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.next.rule=Host(`${DOMAIN:-example.com}`) || Host(`www.${DOMAIN:-example.com}`)
-      - traefik.http.routers.next.entrypoints=websecure
-      - traefik.http.routers.next.tls.certresolver=cf
-      - traefik.http.services.next.loadbalancer.server.port=3000
+      - "traefik.enable=true"
+      - "traefik.http.routers.next.rule=Host(`${DOMAIN:-example.com}`) || Host(`www.${DOMAIN:-example.com}`)"
+      - "traefik.http.routers.next.entrypoints=websecure"
+      - "traefik.http.routers.next.tls.certresolver=cf"
+      - "traefik.http.services.next.loadbalancer.server.port=3000"
       # local helper router (no TLS)
-      - traefik.http.routers.next-local.rule=Host(`localhost`)
-      - traefik.http.routers.next-local.entrypoints=web
-      - traefik.http.routers.next-local.priority=10
+      - "traefik.http.routers.next-local.rule=Host(`localhost`)"
+      - "traefik.http.routers.next-local.entrypoints=web"
+      - "traefik.http.routers.next-local.priority=10"
     depends_on:
       wordpress:
         condition: service_started
 
   # ─────────────────────────── Traefik ─────────────────────────
   traefik:
-    image: traefik:v2.11          # ← **pin to v 2.x**
+    image: traefik:v2.11          # ← pin to Traefik v2.x
     restart: unless-stopped
     command:
       - --log.level=INFO
@@ -87,7 +87,7 @@ services:
       - --certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare
       - --certificatesresolvers.cf.acme.email=${LE_EMAIL:-local@example.com}
       - --certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json
-      # request apex + wildcard cert on start‑up  (valid on v2.11)
+      # request apex + wildcard cert on start‑up (proper CLI syntax)
       - --entrypoints.websecure.http.tls.domains[0].main=${DOMAIN:-example.com}
       - --entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN:-example.com}
     environment:
