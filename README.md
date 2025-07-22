@@ -23,8 +23,8 @@ cd wordpress   && composer install
 | Goal | One‑liner | Opens in browser |
 |------|-----------|------------------|
 | build & start | `docker compose up --build -d` | – |
-| WP admin | – | <http://localhost:8080/wp/wp-admin> |
-| GraphQL | – | <http://localhost:8080/graphql> |
+| WP admin | – | <http://localhost:8000/wp/wp-admin> |
+| GraphQL | – | <http://localhost:8000/graphql> |
 | Next.js (container) | – | <http://localhost:3000> |
 | ultrafast React dev (Turbopack) | `cd nextjs-site && pnpm dev` | <http://localhost:3000> |
 | stop stack | `docker compose down` | – |
@@ -37,8 +37,8 @@ docker compose up -d            # fresh DB, run installer
 ### What a clean start looks like
 
 * After `docker compose up`, run `./bin/wp-bootstrap.sh` to install WordPress using `DOMAIN` from `.env`, activate **WP GraphQL** and set permalinks.
-* `https://localhost:8080/wp/wp-admin` shows the login screen
-* `http://localhost:8080/graphql` returns `{"errors":[{"message":"Must provide query string"}]}`
+* `https://localhost:8000/wp/wp-admin` shows the login screen
+* `http://localhost:8000/graphql` returns `{"errors":[{"message":"Must provide query string"}]}`
   (no redirect to `/graphql/`; if you see a 301, flush permalinks and verify
   `web/app/mu-plugins/disable-graphql-canonical.php` is present)
 * `http://localhost:3000` renders the Next.js front‑end (or use Turbopack on :3000).

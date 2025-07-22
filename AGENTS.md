@@ -12,7 +12,7 @@ This repository hosts a headless WordPress backend and a Next.js 15 frontend.
    - `cd nextjs-site && pnpm install`
    - `cd wordpress && composer install`
 3. Start the local stack via `docker compose up --build -d`.
-   - Visit `http://localhost:8080/wp/wp-admin` for WordPress.
+   - Visit `http://localhost:8000/wp/wp-admin` for WordPress.
     - Run `cd nextjs-site && pnpm dev` to start the frontend.
    - Visit `http://localhost:3000` for the Next.js frontend when running `pnpm dev`.
 4. Stop with `docker compose down`.
