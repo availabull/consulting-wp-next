@@ -2,8 +2,9 @@ set -eu
 
 docker compose exec wordpress bash -c '
   cd /var/www/html/web &&
+  URL=${WP_HOME:-https://wp.${DOMAIN:-example.com}} &&
   wp core is-installed --allow-root || wp core install \
-      --url=https://wp.${DOMAIN:-example.com} \
+      --url="$URL" \
       --title="Production Site" \
       --admin_user=${WP_ADMIN_USER:-admin} \
       --admin_password=${WP_ADMIN_PASS:-changeme} \
