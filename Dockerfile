@@ -1,5 +1,5 @@
 # ─────────────────── Build stage ───────────────────
-FROM node:22-slim AS builder
+FROM node:20-slim AS builder
 WORKDIR /app
 
 ARG NEXT_PUBLIC_WPGRAPHQL_URL
@@ -17,7 +17,7 @@ COPY . .
 RUN pnpm --filter nextjs-site build
 
 # ─────────────────── Runtime stage ───────────────────
-FROM node:22-slim
+FROM node:20-slim
 WORKDIR /app
 ENV NODE_ENV=production
 
