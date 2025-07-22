@@ -23,3 +23,13 @@ _Consultancy WP × Next • Headless WordPress (Bedrock) + Next.js 15_
    cp .env.example       .env
    cp stack.env.example  stack.env
    cp nextjs-site/.env.example nextjs-site/.env.local
+   corepack enable pnpm
+   cd nextjs-site && pnpm install
+   cd ../wordpress   && composer install
+   cd ..
+   docker compose up --build -d          # WP :8000, Next :3000
+   ./bin/wp-bootstrap.sh                 # installs WP + activates WPGraphQL
+   ```
+
+2. **Lint before pull requests**
+   Run `pnpm lint` in `nextjs-site` and `composer lint` in `wordpress`. Use `composer lint:fix` to format PHP.
