@@ -36,8 +36,8 @@ docker compose up -d            # fresh DB, run installer
 
 ### What a clean start looks like
 
-* `https://localhost:8080/wp/wp-admin/install.php` shows **“Welcome to WordPress – Site Title / Username / Password”**
-* After setup → activate **WP GraphQL** → save **Permalinks / Post name**
+* After `docker compose up`, run `./bin/wp-bootstrap.sh` to install WordPress using `DOMAIN` from `.env`, activate **WP GraphQL** and set permalinks.
+* `https://localhost:8080/wp/wp-admin` shows the login screen
 * `http://localhost:8080/graphql` returns `{"errors":[{"message":"Must provide query string"}]}`
   (no redirect to `/graphql/`; if you see a 301, flush permalinks and verify
   `web/app/mu-plugins/disable-graphql-canonical.php` is present)
@@ -92,7 +92,7 @@ chmod 600 /var/lib/docker/volumes/consulting-wp-next_le/_data/acme.json
    docker compose up -d
    ```
 
-   That's it—the droplet now runs the updated stack behind Traefik.
+   The workflow then runs `bin/wp-bootstrap.sh` to install WordPress with your domain and activate **WP GraphQL**. That's it—the droplet now runs the updated stack behind Traefik.
 
 ### 2.3 Troubleshooting
 
