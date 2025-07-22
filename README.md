@@ -61,6 +61,8 @@ DOMAIN=example.com
 ``` |
 | **GitHub → repo → Settings → Secrets** | same vars + `DOMAIN` |
 
+**Note:** The GitHub secret `DOMAIN` **must** be set—if it is missing the deploy workflow will fail.
+
 #### Traefik `le` volume
 
 Traefik keeps Let’s Encrypt data in the named volume `le`.  That volume
