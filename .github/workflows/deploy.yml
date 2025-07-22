@@ -159,6 +159,14 @@ jobs:
               traefik:
                 image: traefik:v2.11            # ← pin to Traefik v2
                 restart: unless-stopped
+                init: true
+                entrypoint:
+                  - /bin/sh
+                  - -c
+                  - |
+                    touch /letsencrypt/acme.json
+                    chmod 600 /letsencrypt/acme.json
+                    exec traefik "$@"
                 command:
                   - --log.level=INFO
                   - --providers.docker=true
