@@ -41,7 +41,7 @@ services:
       - "traefik.http.routers.wp.entrypoints=websecure"
       - "traefik.http.routers.wp.tls.certresolver=cf"
       - "traefik.http.services.wp.loadbalancer.server.port=80"
-      - "traefik.http.routers.wp-local.rule=Host(`localhost`) && (PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`))"
+      - "traefik.http.routers.wp-local.rule=(Host(`localhost`) || Host(`127.0.0.1`)) && (PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`))"
       - "traefik.http.routers.wp-local.entrypoints=web"
       - "traefik.http.routers.wp-local.priority=12"
     depends_on:
