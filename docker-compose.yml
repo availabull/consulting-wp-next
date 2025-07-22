@@ -47,6 +47,7 @@ services:
   next:
     build:
       context: ./nextjs-site
+      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     restart: unless-stopped

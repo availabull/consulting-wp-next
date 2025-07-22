@@ -70,6 +70,7 @@ jobs:
           [ -z "$DOMAIN" ] && { echo "❌ DOMAIN secret is unset"; exit 1; }
           docker build \
             --build-arg NEXT_PUBLIC_WPGRAPHQL_URL=https://wp.$DOMAIN/graphql \
+            -f nextjs-site/Dockerfile \
             -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
           docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
