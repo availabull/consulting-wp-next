@@ -38,7 +38,7 @@ COPY --from=composer /app/vendor ./vendor
 # ─── Helper MU‑plugins ─────────────────────────────────────────────
 COPY web/app/mu-plugins/wp-cli-htaccess-fix.php       web/app/mu-plugins/
 COPY web/app/mu-plugins/disable-graphql-canonical.php web/app/mu-plugins/
-COPY vendor/roots/bedrock/autoloader.php              web/app/mu-plugins/bedrock-autoloader.php
+COPY web/app/mu-plugins/bedrock-autoloader.php        web/app/mu-plugins/
 
 # ─── keep Site‑Health green → pre‑create wp‑content/upgrade ────────
 RUN mkdir -p web/app/upgrade
