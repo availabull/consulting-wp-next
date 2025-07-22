@@ -18,5 +18,5 @@ cd <repo>
 echo "MYSQL_ROOT_PASSWORD=secret" > .env
 
 docker compose up --build -d          # builds WP + Next
-open http://localhost:8080/wp/wp-admin/   # install WordPress
-open http://localhost:8080               # Next.js
+open http://localhost:8000/wp/wp-admin/   # install WordPress
+open http://localhost:8000               # Next.js

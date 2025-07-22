@@ -41,7 +41,7 @@ const info = {
   urls: {
     local: {
       next: 'http://localhost',
-      wpAdmin: 'http://localhost:8080/wp/wp-admin',
+      wpAdmin: 'http://localhost:8000/wp/wp-admin',
       graphql: 'http://localhost/graphql'
     },
     production: {
@@ -65,7 +65,7 @@ const info = {
       local: [
         'localhost/wp',
         'localhost/graphql',
-        'localhost:8080/wp/wp-admin'
+        'localhost:8000/wp/wp-admin'
       ]
     },
     next: {

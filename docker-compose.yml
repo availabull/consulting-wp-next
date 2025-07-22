@@ -27,8 +27,8 @@ services:
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
       DB_HOST: db
       WP_ENV: ${WP_ENV:-development}
-      WP_HOME: ${WP_HOME:-http://localhost:8080}
-      WP_SITEURL: ${WP_SITEURL:-http://localhost:8080/wp}
+      WP_HOME: ${WP_HOME:-http://localhost:8000}
+      WP_SITEURL: ${WP_SITEURL:-http://localhost:8000/wp}
     volumes:
       - uploads:/var/www/html/web/app/uploads
     healthcheck:
@@ -92,7 +92,7 @@ services:
       LE_EMAIL: ${LE_EMAIL:-local@example.com}
     ports:
       - "80:80"
-      - "8080:80"
+      - "8000:80"
       - "443:443"
       - "8443:443"
     volumes:
