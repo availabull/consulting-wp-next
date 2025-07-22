@@ -81,8 +81,7 @@ services:
       - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
       - "--certificatesresolvers.cf.acme.email=${LE_EMAIL:-local@example.com}"
       - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.cf.acme.domains[0].main=${DOMAIN:-example.com}"
-      - "--certificatesresolvers.cf.acme.domains[0].sans=*.${DOMAIN:-example.com}"
+      - "--certificatesresolvers.cf.acme.domains=${DOMAIN:-example.com},*.${DOMAIN:-example.com}"
     environment:
       CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN:-dev}
       LE_EMAIL: ${LE_EMAIL:-local@example.com}
