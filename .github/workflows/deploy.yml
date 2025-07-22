@@ -231,7 +231,7 @@ jobs:
             /srv/consultancy/bin/wp-bootstrap.sh
 
             # -------- wait for WordPress -----------------------------
-            docker compose wait wordpress
+            # docker compose wait wordpress
 
       # ---------- WordPress housekeeping ----------------------------
       - name: WordPress housekeeping
