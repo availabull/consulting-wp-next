@@ -105,3 +105,16 @@ chmod 600 /var/lib/docker/volumes/consulting-wp-next_le/_data/acme.json
 
 Run `node ./scripts/site-info.js` to print a JSON summary of the stack. This shows
 current URLs, versions and the Traefik routing configuration.
+
+## 4 Clean workspace
+
+The helper script `scripts/git-clean-preserve.sh` removes untracked files using
+`git clean -fdx` while **preserving** `.env` and `stack.env`. Use it to reset the
+working directory without losing your local configuration:
+
+```bash
+./scripts/git-clean-preserve.sh
+```
+
+After running the script the repository will be pristine, and your `.env` and
+`stack.env` files will still be present.
