@@ -9,7 +9,7 @@
 
 ## 1 Local workflow
 
-1. Copy `.env.example` → `.env` and `stack.env.example` → `stack.env`, then fill in the placeholder values.
+1. Copy `.env.example` → `.env` and `stack.env.example` → `stack.env`, then fill in the placeholder values. Optionally set `WP_ADMIN_USER`, `WP_ADMIN_PASS` and `WP_ADMIN_EMAIL` in `.env` to override the default admin credentials (`admin` / `changeme` / `you@example.com`).
 2. Copy `nextjs-site/.env.example` → `nextjs-site/.env.local` before running `pnpm dev`.
 3. Install dependencies **before** running Docker:
 
