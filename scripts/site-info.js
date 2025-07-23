@@ -42,7 +42,7 @@ const info = {
     local: {
       next: 'http://localhost',
       wpAdmin: 'http://localhost:8000/wp/wp-admin',
-      graphql: 'http://localhost/graphql'
+      graphql: 'http://localhost/wp/graphql'
     },
     production: {
       next: `https://${baseDomain}`,
@@ -64,7 +64,7 @@ const info = {
       production: `wp.${baseDomain}`,
       local: [
         'localhost/wp',
-        'localhost/graphql',
+        'localhost/wp/graphql',
         'localhost:8000/wp/wp-admin'
       ]
     },
