@@ -232,45 +232,38 @@ jobs:
             BOOT
             chmod +x /srv/consultancy/bin/wp-bootstrap.sh
 
-            # -------- traefik checker --------------------------------
-            cat > /srv/consultancy/bin/check-traefik.sh <<'CHECK'
-            #!/usr/bin/env bash
-            set -euo pipefail
 
-            # Load variables from .env if present
-            REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-            if [ -f "$REPO_ROOT/.env" ]; then
-              set -a
-              . "$REPO_ROOT/.env"
-              set +a
-            fi
 
-            missing=0
-            for var in DOMAIN LE_EMAIL CLOUDFLARE_DNS_API_TOKEN; do
-              if [ -z "${!var:-}" ]; then
-                echo "Error: $var is not set" >&2
-                missing=1
-              fi
-            done
+            # check script uploaded separately
 
-            if [ "$missing" -eq 1 ]; then
-              echo "Fix the above issues before starting Traefik." >&2
-              exit 1
-            fi
+      - name: Upload traefik checker
+        uses: appleboy/scp-action@v1
+        with:
+          host:     ${{ secrets.DO_HOST }}
+          username: root
+          key:      ${{ secrets.DO_SSH_KEY }}
+          source:   bin/check-traefik.sh
+          target:   /srv/consultancy/bin/
+          overwrite: true
 
-            echo "Traefik prerequisites satisfied."
-            CHECK
+      - name: Start services
+        uses: appleboy/ssh-action@v1
+        env:
+          DOMAIN: ${{ secrets.DOMAIN }}
+        with:
+          host:     ${{ secrets.DO_HOST }}
+          username: root
+          key:      ${{ secrets.DO_SSH_KEY }}
+          timeout:  "1200s"
+          command_timeout: "1200s"
+          envs: DOMAIN
+          script: |-
+            set -eu
             chmod +x /srv/consultancy/bin/check-traefik.sh
-
             /srv/consultancy/bin/check-traefik.sh
-
-
-            # -------- pull, start, bootstrap -------------------------
             docker compose pull
             docker compose up -d --remove-orphans
             /srv/consultancy/bin/wp-bootstrap.sh
-
-            # -------- wait for WordPress -----------------------------
             # docker compose wait wordpress
 
       # ---------- WordPress housekeeping ----------------------------
