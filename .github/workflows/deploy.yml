@@ -234,7 +234,7 @@ jobs:
 
             # -------- traefik checker --------------------------------
             cat <<'EOF' > /srv/consultancy/bin/check-traefik.sh
-$(sed 's/^/            /' bin/check-traefik.sh)
+            $(sed 's/^/            /' bin/check-traefik.sh)
             EOF
             chmod +x /srv/consultancy/bin/check-traefik.sh
 
