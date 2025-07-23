@@ -89,6 +89,7 @@ variables are set.
 * `docker compose logs traefik`
 * check permissions of `acme.json` (should be `600`)
 * ensure required environment variables (`LE_EMAIL`, `CLOUDFLARE_DNS_API_TOKEN`, `MYSQL_ROOT_PASSWORD`) are set
+* Cloudflare error **526** can mean that Traefik hit the Let's Encrypt ACME rate limit. Check `docker compose logs traefik` for messages like `429 :: POST` and wait until the rate-limit window expires.
 
 ## 3 Site info
 
