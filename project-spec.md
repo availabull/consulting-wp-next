@@ -1,6 +1,6 @@
 # Project Specification – “Consultancy WP × Next”
 
-> **Version 1.1 – 22 Jul 2025**  
+> **Version 1.2 – 22 Jul 2025**
 > Maintainer • **@devpony**  
 > Target env • DigitalOcean (Ubuntu 22.04, Docker 24.x)  
 > _This file is immutable input for all AI‑driven development tasks._
@@ -24,7 +24,7 @@
 |--------------------|--------------------------------------|---------------|-------|
 | CMS core           | **roots/bedrock**                   | WP 6.8.x      | Env‑vars via `.env`, Composer‑managed. |
 | WP theme           | Hello + child                        | latest        | No front‑end assets—headless. |
-| WP plugins         | `wp-graphql`, `wp-super-cache`       | 2.3.x         | `/graphql` endpoint, fallback cache. |
+| WP plugins         | `wp-graphql`, `wp-super-cache`       | 2.3.x         | `/wp/graphql` endpoint (WordPress lives in `/wp`), fallback cache. |
 | Front‑end          | **Next.js 15.3.4**                   | 15.3.4        | `app/` router, RSC, Turbopack dev. |
 | Data client        | **@apollo/client**                   | 3.13.8        | Suspense‑ready cache. |
 | Design system      | Tailwind 4.1 + **shadcn/ui**         | 4.1.x         | Radix primitives. |
