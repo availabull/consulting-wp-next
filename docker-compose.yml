@@ -1,4 +1,4 @@
-# docker-compose.yml  — local dev & staging
+# docker-compose.yml — local dev & staging
 version: "3.9"
 
 services:
@@ -36,22 +36,20 @@ services:
       interval: 10s
       retries: 30
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.wp.rule=Host(`wp.${DOMAIN:-example.com}`)"
-      - "traefik.http.routers.wp.entrypoints=websecure"
-      - "traefik.http.routers.wp.tls.certresolver=cf"
-      - "traefik.http.services.wp.loadbalancer.server.port=80"
-      - "traefik.http.routers.wp-local.rule=(Host(`localhost`) || Host(`127.0.0.1`)) && (PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`))"
-      - "traefik.http.routers.wp-local.entrypoints=web"
-      - "traefik.http.routers.wp-local.priority=12"
+      - traefik.enable=true
+      - traefik.http.routers.wp.rule=Host(`wp.${DOMAIN:-example.com}`)
+      - traefik.http.routers.wp.entrypoints=websecure
+      - traefik.http.routers.wp.tls.certresolver=cf
+      - traefik.http.services.wp.loadbalancer.server.port=80
+      - traefik.http.routers.wp-local.rule=(Host(`localhost`) || Host(`127.0.0.1`)) && (PathPrefix(`/wp`) || PathPrefix(`/graphql`) || Path(`/favicon.ico`))
+      - traefik.http.routers.wp-local.entrypoints=web
+      - traefik.http.routers.wp-local.priority=12
     depends_on:
-      db:
-        condition: service_healthy
+      db: { condition: service_healthy }
 
   next:
     build:
       context: ./nextjs-site
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_WPGRAPHQL_URL: http://wordpress/graphql
     restart: unless-stopped
@@ -65,17 +63,16 @@ services:
       interval: 10s
       retries: 30
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.next.rule=HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.${DOMAIN:-example.com}`, `${DOMAIN:-example.com}`)"
-      - "traefik.http.routers.next.entrypoints=websecure"
-      - "traefik.http.routers.next.tls.certresolver=cf"
-      - "traefik.http.services.next.loadbalancer.server.port=3000"
-      - "traefik.http.routers.next-local.rule=Host(`localhost`)"
-      - "traefik.http.routers.next-local.entrypoints=web"
-      - "traefik.http.routers.next-local.priority=10"
+      - traefik.enable=true
+      - traefik.http.routers.next.rule=Host(`${DOMAIN:-example.com}`) || Host(`www.${DOMAIN:-example.com}`)
+      - traefik.http.routers.next.entrypoints=websecure
+      - traefik.http.routers.next.tls.certresolver=cf
+      - traefik.http.services.next.loadbalancer.server.port=3000
+      - traefik.http.routers.next-local.rule=Host(`localhost`)
+      - traefik.http.routers.next-local.entrypoints=web
+      - traefik.http.routers.next-local.priority=10
     depends_on:
-      wordpress:
-        condition: service_started
+      wordpress: { condition: service_started }
 
   traefik:
     image: traefik:v2.11
@@ -89,20 +86,18 @@ services:
         chmod 600 /letsencrypt/acme.json
         exec traefik "$@"
     depends_on:
-      next:
-        condition: service_healthy
-      wordpress:
-        condition: service_healthy
+      next:      { condition: service_healthy }
+      wordpress: { condition: service_healthy }
     command:
-      - "--log.level=DEBUG"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.cf.acme.dnschallenge=true"
-      - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
-      - "--certificatesresolvers.cf.acme.email=${LE_EMAIL:-local@example.com}"
-      - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
+      - --log.level=DEBUG
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.cf.acme.dnschallenge=true
+      - --certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.cf.acme.email=${LE_EMAIL:-local@example.com}
+      - --certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json
     environment:
       CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN:-dev}
       LE_EMAIL: ${LE_EMAIL:-local@example.com}
@@ -112,11 +107,10 @@ services:
       - "443:443"
       - "8443:443"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - le:/letsencrypt
 
 volumes:
   db_data:
   uploads:
   le:
-  
