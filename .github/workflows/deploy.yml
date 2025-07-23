@@ -1,28 +1,33 @@
+# .github/workflows/deploy.yml
 name: Deploy stack
 
 on:
   push:
     branches: [ main, master ]
 
-# allow the workflow to read the repo and push images to GHCR
+# Minimal scopes for pushing to GHCR
 permissions:
   contents: read
   packages: write
-################################################################################
+
 jobs:
-  # ────────────── LINT JOBS ─────────────────────────────────────────
+# ────────────────────────────────────── L I N T   J O B S ──────────────────────────────────────
   lint-nextjs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
-        with: { node-version: 20 }
+        with:
+          node-version: 20
+
       - name: Install deps
         working-directory: nextjs-site
         run: |
           corepack enable pnpm
           pnpm install --frozen-lockfile
+
       - name: pnpm lint
         working-directory: nextjs-site
         run: pnpm lint
@@ -31,25 +36,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
-        with: { php-version: '8.1' }
+        with:
+          php-version: 8.1
+
       - name: Install deps
         working-directory: wordpress
         run: composer install --no-interaction
+
       - name: composer lint
         working-directory: wordpress
         run: composer lint
 
-  # ───────────── DEPLOY ────────────────────────────────────────────
+# ────────────────────────────────────── D E P L O Y ────────────────────────────────────────────
   deploy:
     runs-on: ubuntu-latest
     needs: [ lint-nextjs, lint-wordpress ]
 
     steps:
+# ── Checkout repo ──────────────────────────────────────────────────────────────────────────────
       - uses: actions/checkout@v4
 
-      # ---------- Build & push images --------------------------------
+# ── GHCR login ─────────────────────────────────────────────────────────────────────────────────
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -57,12 +67,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push WordPress (fresh each run)
+# ── Build & push WordPress image ───────────────────────────────────────────────────────────────
+      - name: Build & push WordPress
         run: |
           docker build --pull --no-cache \
             -t ghcr.io/${{ github.repository }}/wp:${{ github.sha }} wordpress
           docker push ghcr.io/${{ github.repository }}/wp:${{ github.sha }}
 
+# ── Build & push Next.js image (skip SSG) ──────────────────────────────────────────────────────
       - name: Build & push Next.js
         env:
           DOMAIN: ${{ secrets.DOMAIN }}
@@ -74,7 +86,18 @@ jobs:
             -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
           docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
-      # ---------- Provision droplet & deploy stack -------------------
+# ── Upload helper script (Traefik pre‑flight) ──────────────────────────────────────────────────
+      - name: Upload check-traefik.sh
+        uses: appleboy/scp-action@v1
+        with:
+          host:     ${{ secrets.DO_HOST }}
+          username: root
+          key:      ${{ secrets.DO_SSH_KEY }}
+          source:   bin/check-traefik.sh
+          target:   /srv/consultancy/bin/
+          overwrite: true
+
+# ── Provision droplet & deploy stack ───────────────────────────────────────────────────────────
       - name: Deploy on droplet
         uses: appleboy/ssh-action@v1
         env:
@@ -93,7 +116,7 @@ jobs:
             mkdir -p /srv/consultancy
             cd /srv/consultancy
 
-            # weekly docker‑prune
+            # ── weekly docker‑prune ─────────────────────────────────
             if [ ! -f /etc/cron.weekly/docker-prune ]; then
               printf '%s\n' '#!/usr/bin/env bash' \
                 'docker image prune -af --filter "until=168h"' \
@@ -101,7 +124,7 @@ jobs:
             fi
             docker image prune -af || true
 
-            # -------- docker‑compose.yml written on droplet ----------
+            # ── docker‑compose.yml (prod) ───────────────────────────
             cat > docker-compose.yml <<'COMPOSE'
             services:
               db:
@@ -149,7 +172,7 @@ jobs:
                 expose: [ "3000" ]
                 labels:
                   - traefik.enable=true
-                  - traefik.http.routers.next.rule=HostRegexp(`{subdomain:[a-zA-Z0-9-]+}.${DOMAIN}`, `${DOMAIN}`)
+                  - traefik.http.routers.next.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)
                   - traefik.http.routers.next.entrypoints=websecure
                   - traefik.http.routers.next.tls.certresolver=cf
                   - traefik.http.services.next.loadbalancer.server.port=3000
@@ -157,7 +180,7 @@ jobs:
                   wordpress: { condition: service_started }
 
               traefik:
-                image: traefik:v2.11            # ← pin to Traefik v2
+                image: traefik:v2.11
                 restart: unless-stopped
                 init: true
                 entrypoint:
@@ -177,6 +200,7 @@ jobs:
                   - --certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare
                   - --certificatesresolvers.cf.acme.email=${LE_EMAIL}
                   - --certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json
+                  - --certificatesresolvers.cf.acme.domains=${DOMAIN},*.${DOMAIN}
                 environment:
                   CLOUDFLARE_DNS_API_TOKEN: ${CLOUDFLARE_DNS_API_TOKEN}
                   LE_EMAIL: ${LE_EMAIL}
@@ -188,10 +212,10 @@ jobs:
             volumes:
               db_data:
               uploads:
-              le: {}
+              le:
             COMPOSE
 
-            # -------- env & secret files -----------------------------
+            # ── env & secret files ──────────────────────────────────
             cat > .env <<ENV
             DOMAIN=$DOMAIN
             CLOUDFLARE_DNS_API_TOKEN=${{ secrets.CLOUDFLARE_DNS_API_TOKEN }}
@@ -209,9 +233,9 @@ jobs:
             LOGGED_IN_SALT=${{ secrets.LOGGED_IN_SALT }}
             NONCE_SALT=${{ secrets.NONCE_SALT }}
             STACK
-            perl -pi -e 's/\$/\$\$/g' stack.env   # escape $
+            perl -pi -e 's/\$/\$\$/g' stack.env   # escape $
 
-            # -------- bootstrap helper -------------------------------
+            # ── bootstrap helper ────────────────────────────────────
             cat > /srv/consultancy/bin/wp-bootstrap.sh <<'BOOT'
             #!/usr/bin/env bash
             set -eu
@@ -232,24 +256,14 @@ jobs:
             BOOT
             chmod +x /srv/consultancy/bin/wp-bootstrap.sh
 
-            # -------- traefik checker --------------------------------
-            cat <<'EOF' > /srv/consultancy/bin/check-traefik.sh
-$(sed 's/^/            /' bin/check-traefik.sh)
-            EOF
-            chmod +x /srv/consultancy/bin/check-traefik.sh
-
+            # ── run pre‑flight, pull, start, bootstrap ──────────────
             /srv/consultancy/bin/check-traefik.sh
-
-
-            # -------- pull, start, bootstrap -------------------------
             docker compose pull
             docker compose up -d --remove-orphans
             /srv/consultancy/bin/wp-bootstrap.sh
+            # Optional: docker compose wait wordpress
 
-            # -------- wait for WordPress -----------------------------
-            # docker compose wait wordpress
-
-      # ---------- WordPress housekeeping ----------------------------
+# ─────────────────────────────────── W P   H O U S E K E E P I N G ─────────────────────────────
       - name: WordPress housekeeping
         if: success()
         uses: appleboy/ssh-action@v1
