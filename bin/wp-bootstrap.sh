@@ -4,10 +4,9 @@ set -euo pipefail
 docker compose exec wordpress bash -eu <<'BOOT'
 cd /var/www/html
 WP() { wp --path=web/wp --allow-root "$@"; }
-
 log() { printf "\033[36m→ %s\033[0m\n" "$*"; }
 
-# 1. Core
+# 1. Core install
 URL="${WP_HOME:-https://wp.${DOMAIN:-example.com}}"
 WP core is-installed >/dev/null 2>&1 || WP core install \
   --url="$URL" --title="Production Site" \
@@ -15,39 +14,30 @@ WP core is-installed >/dev/null 2>&1 || WP core install \
   --admin_password="${WP_ADMIN_PASS:-changeme}" \
   --admin_email="${WP_ADMIN_EMAIL:-you@example.com}" --skip-email
 
-# 2. Plugin activation helper (no suppression)
+# 2. Activation helper
 activate () {
-  local PLUGIN="$1"
-  if ! WP plugin is-installed "$PLUGIN" >/dev/null 2>&1; then
-    log "❌ $PLUGIN not installed"; exit 1;
-  fi
-
-  if WP plugin is-active "$PLUGIN" >/dev/null 2>&1; then
-    log "✔ $PLUGIN already active"
-  else
-    log "Activating $PLUGIN"
-    if ! WP plugin activate "$PLUGIN"; then
-      log "❌ Activation of $PLUGIN failed (see message above)"
-      exit 1
-    fi
-  fi
+  local P="$1"
+  WP plugin is-installed "$P" >/dev/null 2>&1 || { log "❌ $P not installed"; exit 1; }
+  WP plugin is-active   "$P" >/dev/null 2>&1 && { log "✔ $P already active"; return; }
+  log "Activating $P";  WP plugin activate "$P" || { log "❌ Activation of $P failed"; exit 1; }
 }
 
-# base set
+# 2a base
 activate wp-graphql
 activate wordpress-seo
+WP yoast indexables --reindex || true         # fix first‑run DB tables
 activate advanced-custom-fields
 activate wpvivid-backuprestore
 
-# extensions
+# 2b extensions
 YOAST_GQL=$(WP plugin list --field=name | grep -E '^(add-wpgraphql-seo|wp-graphql-seo|wp-graphql-yoast-seo)$' || true)
 [ -n "$YOAST_GQL" ] && activate "$YOAST_GQL"
 activate wp-graphql-acf
 
-# 3. permalinks
+# 3. Permalinks
 WP option update permalink_structure "/%postname%/" >/dev/null
 WP rewrite flush --hard >/dev/null
 
-log "Active plugins:"
-WP plugin list --status=active --field=name
+log "Active plugins:"; WP plugin list --status=active --field=name
+log "Bootstrap finished ✔"
 BOOT
