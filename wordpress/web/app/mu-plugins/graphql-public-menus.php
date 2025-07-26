@@ -19,5 +19,5 @@ add_filter(
         return $is_private;
     },
     10,
-    2
+    2, // ← trailing comma required for multi‑line argument list
 );
