@@ -1,68 +1,53 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# ---------------------------------------------------------------------------
-# Bootstraps WordPress inside the "wordpress" service (Bedrock structure).
-# ---------------------------------------------------------------------------
 
 docker compose exec wordpress bash -eu <<'BOOT'
-
-cd /var/www/html   # Bedrock root
-
+cd /var/www/html
 WP() { wp --path=web/wp --allow-root "$@"; }
-say() { printf "\033[34m── %s\033[0m\n" "$*"; }
 
-# ───────── 1. Core install ─────────
+log() { printf "\033[36m→ %s\033[0m\n" "$*"; }
+
+# 1. Core
 URL="${WP_HOME:-https://wp.${DOMAIN:-example.com}}"
-if ! WP core is-installed > /dev/null 2>&1; then
-  say "Installing WordPress core …"
-  WP core install \
-    --url="$URL" --title="Production Site" \
-    --admin_user="${WP_ADMIN_USER:-admin}" \
-    --admin_password="${WP_ADMIN_PASS:-changeme}" \
-    --admin_email="${WP_ADMIN_EMAIL:-you@example.com}" \
-    --skip-email
-else
-  say "WordPress already installed"
-fi
+WP core is-installed >/dev/null 2>&1 || WP core install \
+  --url="$URL" --title="Production Site" \
+  --admin_user="${WP_ADMIN_USER:-admin}" \
+  --admin_password="${WP_ADMIN_PASS:-changeme}" \
+  --admin_email="${WP_ADMIN_EMAIL:-you@example.com}" --skip-email
 
-# ───────── 2. Plugin activation ─────
-activate() {
+# 2. Plugin activation helper (no suppression)
+activate () {
   local PLUGIN="$1"
-  if WP plugin is-installed "$PLUGIN" > /dev/null 2>&1; then
-    if ! WP plugin is-active "$PLUGIN" > /dev/null 2>&1; then
-      say "Activating $PLUGIN …"
-      WP plugin activate "$PLUGIN" || {
-        echo "✖ Failed to activate $PLUGIN" >&2
-        WP plugin status "$PLUGIN"
-        exit 1
-      }
+  if ! WP plugin is-installed "$PLUGIN" >/dev/null 2>&1; then
+    log "❌ $PLUGIN not installed"; exit 1;
+  fi
+
+  if WP plugin is-active "$PLUGIN" >/dev/null 2>&1; then
+    log "✔ $PLUGIN already active"
+  else
+    log "Activating $PLUGIN"
+    if ! WP plugin activate "$PLUGIN"; then
+      log "❌ Activation of $PLUGIN failed (see message above)"
+      exit 1
     fi
   fi
 }
 
-# 2a. Base plugins
-for p in wp-graphql wordpress-seo advanced-custom-fields wpvivid-backuprestore; do
-  activate "$p"
-done
+# base set
+activate wp-graphql
+activate wordpress-seo
+activate advanced-custom-fields
+activate wpvivid-backuprestore
 
-# 2b. Yoast SEO bridge (slug can vary by package/version)
-YOAST_GQL_SLUG=$(WP plugin list --field=name | grep -E '^(wp-graphql-seo|wp-graphql-yoast-seo|add-wpgraphql-seo)$' || true)
-if [ -n "$YOAST_GQL_SLUG" ]; then
-  activate "$YOAST_GQL_SLUG"
-else
-  echo "✖ Could not locate WPGraphQL‑SEO plugin directory" >&2
-fi
-
-# 2c. ACF bridge
+# extensions
+YOAST_GQL=$(WP plugin list --field=name | grep -E '^(add-wpgraphql-seo|wp-graphql-seo|wp-graphql-yoast-seo)$' || true)
+[ -n "$YOAST_GQL" ] && activate "$YOAST_GQL"
 activate wp-graphql-acf
 
-say "Active plugins:"
+# 3. permalinks
+WP option update permalink_structure "/%postname%/" >/dev/null
+WP rewrite flush --hard >/dev/null
+
+log "Active plugins:"
 WP plugin list --status=active --field=name
-
-# ───────── 3. Permalinks ────────────
-say "Ensuring pretty permalinks"
-WP option update permalink_structure "/%postname%/" > /dev/null
-WP rewrite flush --hard > /dev/null
-
-say "Bootstrap finished ✔"
 BOOT
