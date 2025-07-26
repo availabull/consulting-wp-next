@@ -459,6 +459,15 @@ class Config {
 		}
 
 		/**
+		 * Filters the returned ACF field value using acf filters
+		 *
+		 * @param mixed $value     The resolved ACF field value
+		 * @param int   $id        The ID of the object
+		 * @param array $acf_field The ACF field config
+		 */
+		$value = apply_filters('acf/format_value', $value, $id, $acf_field);
+
+		/**
 		 * Filters the returned ACF field value
 		 *
 		 * @param mixed $value     The resolved ACF field value
@@ -799,7 +808,7 @@ class Config {
 					'resolve' => function( $root, $args, $context, $info ) use ( $acf_field ) {
 						$value = $this->get_acf_field_value( $root, $acf_field );
 
-						return $context->get_loader( 'post' )->load_deferred( (int) $value );
+						return DataSource::resolve_post_object( (int) $value, $context );
 					},
 				];
 				break;
@@ -903,11 +912,11 @@ class Config {
 						 */
 						if ( ! empty( $value ) && is_array( $value ) ) {
 							foreach ( $value as $term ) {
-								$terms[] = $context->get_loader( 'term' )->load_deferred( (int) $term );
+								$terms[] = DataSource::resolve_term_object( (int) $term, $context );
 							}
 							return $terms;
 						} else {
-							return $context->get_loader( 'term' )->load_deferred( (int) $value );
+							return DataSource::resolve_term_object( (int) $value, $context );
 						}
 					},
 				];

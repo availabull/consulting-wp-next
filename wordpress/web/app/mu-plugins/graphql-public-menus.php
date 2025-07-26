@@ -1,14 +1,21 @@
 <?php
+
 /**
- * Expose all menus & menu items in WPGraphQL – even if not attached to
- * a theme location.
+ * Make all menus & menu items public in WP GraphQL, even if they aren’t
+ * assigned to a theme location.
+ *
+ * @param bool   $is_private Whether WPGraphQL thinks the data is private.
+ * @param string $model_name GraphQL model name.
+ *
+ * @return bool
  */
 add_filter(
     'graphql_data_is_private',
-    function ( $is_private, $model_name ) {
-        if ( 'MenuObject' === $model_name || 'MenuItemObject' === $model_name ) {
+    static function ($is_private, $model_name) {
+        if (in_array($model_name, ['MenuObject', 'MenuItemObject'], true)) {
             return false;
         }
+
         return $is_private;
     },
     10,

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "30ce2ac2ec1284cc3ae8ade150e5f9e1",
+    "content-hash": "6466278d33391aa415e83e231852afbe",
     "packages": [
         {
             "name": "ashhitch/wp-graphql-yoast-seo",
@@ -1378,16 +1378,16 @@
         },
         {
             "name": "wp-graphql/wp-graphql-acf",
-            "version": "v0.6.2",
+            "version": "v0.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/wp-graphql/wp-graphql-acf.git",
-                "reference": "131311035284db6f2ed51844bf375e057194353f"
+                "reference": "ee09e2feacc075a55e1cccc4b03586bf02058a03"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/wp-graphql/wp-graphql-acf/zipball/131311035284db6f2ed51844bf375e057194353f",
-                "reference": "131311035284db6f2ed51844bf375e057194353f",
+                "url": "https://api.github.com/repos/wp-graphql/wp-graphql-acf/zipball/ee09e2feacc075a55e1cccc4b03586bf02058a03",
+                "reference": "ee09e2feacc075a55e1cccc4b03586bf02058a03",
                 "shasum": ""
             },
             "require": {
@@ -1436,10 +1436,10 @@
             "description": "Advanced Custom Fields bindings for wp-graphql",
             "support": {
                 "issues": "https://github.com/wp-graphql/wp-graphql-acf/issues",
-                "source": "https://github.com/wp-graphql/wp-graphql-acf/tree/v0.6.2"
+                "source": "https://github.com/wp-graphql/wp-graphql-acf/tree/v0.6.0"
             },
             "abandoned": true,
-            "time": "2024-07-22T18:01:33+00:00"
+            "time": "2022-09-15T21:31:29+00:00"
         },
         {
             "name": "wpackagist-plugin/advanced-custom-fields",

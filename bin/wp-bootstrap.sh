@@ -24,10 +24,12 @@ REQUIRED_PLUGINS=(
   wp-graphql
   wordpress-seo
   wp-graphql-yoast-seo
+  advanced-custom-fields
+  wp-graphql-acf
+  wpvivid-backuprestore
 )
 
 for PLUGIN in "${REQUIRED_PLUGINS[@]}"; do
-  # skip if the plugin folder is missing (e.g. not installed)
   if wp plugin is-installed "$PLUGIN" --allow-root; then
     wp plugin is-active "$PLUGIN" --allow-root || wp plugin activate "$PLUGIN" --allow-root
   fi
