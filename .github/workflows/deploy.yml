@@ -74,16 +74,14 @@ jobs:
             -t ghcr.io/${{ github.repository }}/next:${{ github.sha }} nextjs-site
           docker push ghcr.io/${{ github.repository }}/next:${{ github.sha }}
 
-      # Upload helper scripts
-      - name: Upload scripts (Traefik check + WP bootstrap)
+      # Upload traefik checker
+      - name: Upload check‑traefik.sh
         uses: appleboy/scp-action@v1
         with:
           host:     ${{ secrets.DO_HOST }}
           username: root
           key:      ${{ secrets.DO_SSH_KEY }}
-          source:   |
-            bin/check-traefik.sh
-            bin/wp-bootstrap.sh
+          source:   bin/check-traefik.sh
           target:   /srv/consultancy/bin/
           overwrite: true
 
@@ -235,15 +233,34 @@ jobs:
             STACK
             perl -pi -e 's/\$/\$\$/g' stack.env
 
+            # ─ bootstrap helper ─
+            cat > /srv/consultancy/bin/wp-bootstrap.sh <<'BOOT'
+            #!/usr/bin/env bash
+            set -eu
+            docker compose exec wordpress bash -c '
+              cd /var/www/html/web &&
+              wp core is-installed --allow-root || wp core install \
+                --url=https://wp.${DOMAIN} \
+                --title="Production Site" \
+                --admin_user=${WP_ADMIN_USER:-admin} \
+                --admin_password=${WP_ADMIN_PASS:-changeme} \
+                --admin_email=${WP_ADMIN_EMAIL:-you@example.com} \
+                --skip-email --allow-root &&
+              wp plugin is-active wp-graphql --allow-root || \
+                wp plugin activate wp-graphql --allow-root &&
+              wp option update permalink_structure "/%postname%/" --allow-root &&
+              wp rewrite flush --hard --allow-root
+            '
+            BOOT
+            chmod +x /srv/consultancy/bin/wp-bootstrap.sh
+
             # ─ pre‑flight, pull, up, bootstrap ─
             /srv/consultancy/bin/check-traefik.sh
             docker compose pull
             docker compose up -d --remove-orphans
-
-            # run the real bootstrap copied earlier
             /srv/consultancy/bin/wp-bootstrap.sh
 
-# ───────────────────────── WP HOUSEKEEPING ───────────────────────
+# ─────────────────────────────────── W P   H O U S E K E E P I N G ─────────────────────────────
       - name: WordPress housekeeping
         if: success()
         uses: appleboy/ssh-action@v1
