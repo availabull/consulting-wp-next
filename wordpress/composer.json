@@ -8,8 +8,7 @@
     { "name": "Scott Walkinshaw", "email": "scott.walkinshaw@gmail.com", "homepage": "https://github.com/swalkinshaw" },
     { "name": "Ben Word",         "email": "ben@benword.com",            "homepage": "https://github.com/retlehs"    }
   ],
-  "keywords": ["bedrock", "composer", "roots", "wordpress", "wp", "wp-config"],
-
+  "keywords": ["bedrock","composer","roots","wordpress","wp","wp-config"],
   "support": {
     "issues": "https://github.com/roots/bedrock/issues",
     "forum":  "https://discourse.roots.io/category/bedrock"
@@ -19,7 +18,7 @@
     {
       "type": "composer",
       "url":  "https://wpackagist.org",
-      "only": ["wpackagist-plugin/*", "wpackagist-theme/*"]
+      "only": ["wpackagist-plugin/*","wpackagist-theme/*"]
     }
   ],
 
@@ -37,11 +36,14 @@
 
     "wpackagist-theme/twentytwentyfive": "^1.0",
 
-    "wpackagist-plugin/wp-graphql":           "^2.3",
-    "wpackagist-plugin/wordpress-seo":        "^22.9",
-    "ashhitch/wp-graphql-yoast-seo":          "^4.23",
-    "wpackagist-plugin/wp-graphql-acf":       "^0.6",
-    "wpackagist-plugin/wpvivid-backuprestore": "^0.9"
+    "wpackagist-plugin/wp-graphql":            "^2.3",
+    "wpackagist-plugin/wordpress-seo":         "^22.9",
+    "ashhitch/wp-graphql-yoast-seo":           "^4.23",
+
+    "wpackagist-plugin/advanced-custom-fields": "^6.2",
+    "wp-graphql/wp-graphql-acf":                "^0.6",
+
+    "wpackagist-plugin/wpvivid-backuprestore":  "^0.9"
   },
 
   "require-dev": {
